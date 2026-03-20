@@ -17,6 +17,14 @@ Scratchy turns your OpenClaw agent into a visual, interactive workspace:
 - **Canvas persistence** — server-side state survives restarts
 - **Smart components** — components handle their own logic (streaming, polling, animation)
 
+## Security
+
+Scratchy integrates with [ProteClaw](https://github.com/yassinebkr/proteclaw) — a defense-in-depth security plugin for OpenClaw agents. ProteClaw provides 9 layers of protection including session integrity, injection detection, canary tokens, and dynamic tool blocking.
+
+The codebase includes client-side and server-side filters that strip ProteClaw security metadata from messages, keeping the UI clean while the plugin operates transparently in the background.
+
+→ **[ProteClaw on GitHub](https://github.com/yassinebkr/proteclaw)** — open source, MIT licensed
+
 ## Current Status
 
 This codebase works with a [fork of OpenClaw](https://github.com/yassinebkr/openclaw) that includes GenUI support. Some features depend on fork-specific APIs (`api.on()` hooks) that are not yet in upstream OpenClaw.
@@ -92,6 +100,12 @@ data:
 ```
 
 Saves ~30-40% tokens compared to equivalent JSON. See `web/js/toon-encoder.js`.
+
+## Related Projects
+
+- **[ProteClaw](https://github.com/yassinebkr/proteclaw)** — Defense-in-depth security for OpenClaw agents
+- **[OpenClaw](https://github.com/openclaw/openclaw)** — The AI agent framework Scratchy is built for
+- **[Scratchy v2](https://github.com/yassinebkr/scratchy-v2)** — Next-gen spatial workbench (coming soon)
 
 ## License
 
