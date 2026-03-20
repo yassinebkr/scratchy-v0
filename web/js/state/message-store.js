@@ -316,7 +316,7 @@
     _normalize: function(text) {
       if (!text) return "";
       return text
-        .replace(/\[ProteClaw Canary\][^\n]*/g, "")
+        .replace(/\[SecurityPlugin Canary\][^\n]*/g, "")
         .replace(/\n?\[message_id:[^\]]*\]/g, "")
         .replace(/\n?\[genui:\w+\]/g, "")
         .replace(/```[\s\S]*?```/g, "")

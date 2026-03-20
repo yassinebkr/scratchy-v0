@@ -89,7 +89,7 @@ class ChatPanel {
 
     // Clean text for display
     var clean = (msg.text || "")
-      .replace(/\[ClawOS Canary\][^\n]*/g, "")
+      .replace(/\[SecurityPlugin Canary\][^\n]*/g, "")
       .replace(/\n?\[message_id:[^\]]*\]/g, "")
       .replace(/\n?\[genui:\w+\]/g, "")
       .trim();

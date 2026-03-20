@@ -10,7 +10,7 @@ function _extractSpeakableText(text) {
   if (!text) return "";
   // Don't speak canvas operations or system messages
   if (/```scratchy-(canvas|ui|tpl|toon)/.test(text)) return "";
-  if (/^\[ProteClaw/.test(text)) return "";
+  if (/^\[SecurityPlugin/.test(text)) return "";
   if (/^(HEARTBEAT_OK|NO_REPLY)$/.test(text.trim())) return "";
 
   var clean = text
@@ -293,8 +293,8 @@ class MessageRenderer {
   createElement(msg) {
     var text = msg.text || "";
     var clean = text
-      .replace(/\[ProteClaw Memory\] Auto-recalled[\s\S]*?(?=\n\[(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun) |$)/g, "")
-      .replace(/\[ProteClaw Canary\][^\n]*/g, "")
+      .replace(/\[SecurityPlugin Memory\] Auto-recalled[\s\S]*?(?=\n\[(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun) |$)/g, "")
+      .replace(/\[SecurityPlugin Canary\][^\n]*/g, "")
       .replace(/\n?\[message_id:[^\]]*\]/g, "")
       .replace(/\n?\[genui:\w+\]/g, "")
       .replace(/^\s*\n/gm, "")
@@ -429,8 +429,8 @@ class MessageRenderer {
   renderUserMessage(text) {
     // Strip metadata tags that shouldn't be visible
     var clean = text
-      .replace(/\[ProteClaw Memory\] Auto-recalled[\s\S]*?(?=\n\[(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun) |$)/g, "")
-      .replace(/\[ProteClaw Canary\][^\n]*/g, "")
+      .replace(/\[SecurityPlugin Memory\] Auto-recalled[\s\S]*?(?=\n\[(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun) |$)/g, "")
+      .replace(/\[SecurityPlugin Canary\][^\n]*/g, "")
       .replace(/\n?\[message_id:[^\]]*\]/g, "")
       .replace(/\n?\[genui:\w+\]/g, "")
       .replace(/^\s*\n/gm, "")
@@ -459,8 +459,8 @@ class MessageRenderer {
   // Render user message with image attachments
   renderUserMessageWithImages(text, imageDataUrls, fileAttachments) {
     var clean = text
-      .replace(/\[ProteClaw Memory\] Auto-recalled[\s\S]*?(?=\n\[(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun) |$)/g, "")
-      .replace(/\[ProteClaw Canary\][^\n]*/g, "")
+      .replace(/\[SecurityPlugin Memory\] Auto-recalled[\s\S]*?(?=\n\[(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun) |$)/g, "")
+      .replace(/\[SecurityPlugin Canary\][^\n]*/g, "")
       .replace(/\n?\[message_id:[^\]]*\]/g, "")
       .replace(/\n?\[genui:\w+\]/g, "")
       .replace(/^\s*\n/gm, "")

@@ -351,17 +351,17 @@ class AdminWidget {
     return [
       `Hi ${firstName},`,
       ``,
-      `You've been invited to ClawOS as ${role}.`,
+      `You've been invited to Scratchy as ${role}.`,
       ``,
       `Here are your credentials:`,
       `  Email: ${email}`,
       `  Temporary Password: ${tempPassword}`,
       ``,
-      `Log in at: https://scratchy.clawos.fr`,
+      `Log in at: https://scratchy.example.com`,
       ``,
       `Please change your password after your first login.`,
       ``,
-      `— ClawOS Admin`
+      `— Scratchy Admin`
     ].join('\n');
   }
 
@@ -388,7 +388,7 @@ class AdminWidget {
     // Build invite email data — stays server-side via pendingInvite
     const pendingInvite = {
       to: user.email,
-      subject: 'Welcome to ClawOS — Your Account is Ready',
+      subject: 'Welcome to Scratchy — Your Account is Ready',
       body: this._inviteEmailBody(user.displayName, user.email, tempPassword, user.role),
       _returnUserId: user.id,
     };
@@ -882,7 +882,7 @@ class AdminWidget {
         .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // strip accents
         .replace(/[^a-z0-9]+/g, '.')                       // non-alphanum → dots
         .replace(/^\.+|\.+$/g, '');                        // trim dots
-      email = `${slug}@clawos.fr`;
+      email = `${slug}@example.com`;
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -928,7 +928,7 @@ class AdminWidget {
     // Side-channel: invite email data stays on the server, never in WS payload
     const pendingInvite = {
       to: user.email,
-      subject: 'Welcome to ClawOS — Your Account is Ready',
+      subject: 'Welcome to Scratchy — Your Account is Ready',
       body: this._inviteEmailBody(user.displayName, user.email, tempPassword, user.role),
       _returnUserId: user.id,
     };

@@ -39,7 +39,7 @@ class SpotifyWidget {
     this._sessionPath = getWidgetStatePath(this._userId, 'spotify-session.json');
     this.clientId = clientId || null;
     this.clientSecret = clientSecret || null;
-    this.redirectUri = redirectUri || 'https://scratchy.clawos.fr/auth/spotify/callback';
+    this.redirectUri = redirectUri || 'https://scratchy.example.com/auth/spotify/callback';
     this.session = this._loadSession();
   }
 

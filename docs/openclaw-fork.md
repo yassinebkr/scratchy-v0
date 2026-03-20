@@ -32,7 +32,7 @@
 3. **Use `api.on()` for hooks** — `api.registerHook()` does not exist in our fork.
 4. **SIGUSR1 does NOT re-wrap tool hooks** — plugin changes require a full restart.
 5. **Gateway token = Scratchy admin password** — treat it as a secret.
-6. **ClawOS LF layer blocks direct writes** to `SOUL.md`, `AGENTS.md`, and `openclaw.json` — use `config.patch` via the gateway instead.
+6. **Direct writes to critical files are blocked** — `SOUL.md`, `AGENTS.md`, and `openclaw.json` — use `config.patch` via the gateway instead.
 
 ---
 
@@ -40,7 +40,7 @@
 
 OpenClaw is an AI agent gateway platform. It sits between AI model providers (Anthropic, Google, OpenAI) and communication channels (webchat, WhatsApp, Discord, Signal, Telegram), acting as the central hub for routing messages, dispatching tools, managing sessions, and streaming events.
 
-We run a fork at `github.com/yassinebkr/openclaw` with custom modifications for our infrastructure, including ClawOS integration, multi-agent orchestration, and a plugin-based security system.
+We run a fork at `github.com/yassinebkr/openclaw` with custom modifications for our infrastructure, including multi-agent orchestration and a plugin-based security system.
 
 ### Core Capabilities
 
@@ -111,7 +111,7 @@ Array of plugin paths loaded at gateway startup.
 
 - **`config.patch`** — Safe partial update. Merges your changes with the existing config. Use this for routine changes.
 - **`config.apply`** — Full replacement. Overwrites the entire config. Use with caution.
-- **Direct file edits** — Blocked by ClawOS LF security layer. Always use `config.patch` through the gateway.
+- **Direct file edits** — Blocked by the security layer. Always use `config.patch` through the gateway.
 
 ---
 
@@ -142,7 +142,7 @@ Sessions are stored as JSONL (JSON Lines) files — one JSON object per line, re
 If a session file becomes corrupted:
 
 1. Delete the corrupted `.jsonl` file from `sessions/`.
-2. The ClawOS L0 layer will auto-repair orphaned `tool_result` entries.
+2. The security plugin will auto-repair orphaned `tool_result` entries.
 3. The session will restart fresh on next use.
 
 ---
@@ -247,10 +247,6 @@ Sending `SIGUSR1` to the gateway process triggers a hot-reload of configuration,
 - Config changes: Apply with `SIGUSR1` ✓
 - Plugin logic changes: Require a **full gateway restart** ✗
 
-### ClawOS Security Plugin
-
-The ClawOS security plugin uses hooks across all 9 security layers to enforce access control, input validation, and output filtering. It intercepts `tool_call`, `before_agent_start`, and other lifecycle events to apply security policies.
-
 ---
 
 ## 8. Model Configuration
@@ -329,21 +325,11 @@ Without this flag, dependency resolution will fail due to peer dependency confli
 
 The gateway token serves double duty as the admin password for Scratchy authentication. Treat it as a secret — do not log it, expose it in responses, or commit it to version control.
 
-### ClawOS LF Layer
-
-The ClawOS Layered Firewall (LF) blocks direct writes to critical files:
-
-- `SOUL.md` — Agent identity/personality
-- `AGENTS.md` — Agent workspace instructions
-- `openclaw.json` — Gateway configuration
-
-To modify `openclaw.json`, use `config.patch` through the gateway API. Direct file writes will be rejected.
-
 ### Session Corruption Recovery
 
 1. Identify the corrupted session file in `/home/youruser/.openclaw/sessions/`.
 2. Delete the corrupted `.jsonl` file.
-3. The ClawOS L0 auto-repair mechanism will handle orphaned `tool_result` entries.
+3. The security plugin auto-repair mechanism will handle orphaned `tool_result` entries.
 4. The session will reinitialize on next connection.
 
 ---
@@ -375,7 +361,7 @@ To modify `openclaw.json`, use `config.patch` through the gateway API. Direct fi
 
 ### Cannot write to openclaw.json / SOUL.md / AGENTS.md
 
-- ClawOS LF layer blocks direct writes to these files.
+- The security layer blocks direct writes to these files.
 - Use `config.patch` through the gateway for config changes.
 
 ### Per-user sessions not working in webchat
@@ -385,4 +371,4 @@ To modify `openclaw.json`, use `config.patch` through the gateway API. Direct fi
 
 ---
 
-*This document covers OpenClaw fork v2026.2.4. For upstream OpenClaw documentation, see the main OpenClaw repository. Our fork diverges in plugin API (`api.on()` vs `api.registerHook()`), security integration (ClawOS), and multi-agent orchestration.*
+*This document covers OpenClaw fork v2026.2.4. For upstream OpenClaw documentation, see the main OpenClaw repository. Our fork diverges in plugin API (`api.on()` vs `api.registerHook()`), security plugin integration, and multi-agent orchestration.*

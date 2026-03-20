@@ -201,7 +201,7 @@ module.exports = { AnalyticsSnapshots };
 Path: `~/.openclaw/agents/main/sessions/`
 - `sessions.json` — maps session keys to session objects
 - `{sessionId}.jsonl` — session transcript files
-- Exclude: `*.deleted.*`, `*.clawos-backup-*`, `*.tmp*`
+- Exclude: `*.deleted.*`, `*.security-backup-*`, `*.tmp*`
 
 ## Session Key Patterns (match ALL, not just webchat)
 ```

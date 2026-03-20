@@ -550,17 +550,23 @@ function setSecurityHeaders(res) {
 function isSystemMessage(text) {
   if (!text) return false;
   const t = text.trim();
-  // Strip ProteClaw injections before checking — these are prepended to all user messages by ProteClaw plugin
+  // Strip security plugin metadata before checking
+  const SP = process.env.SECURITY_TAG_PREFIX || 'SecurityPlugin';
+  const spRe = new RegExp(`\\[${SP} Memory\\] Auto-recalled[\\s\\S]*?(?=\\n\\[(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun) |$)`, 'g');
+  const spCanaryRe = new RegExp(`\\[${SP} Canary\\][^\\n]*`, 'g');
   const stripped = t
-    .replace(/\[ProteClaw Memory\] Auto-recalled[\s\S]*?(?=\n\[(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun) |$)/g, "")
-    .replace(/\[ProteClaw Canary\][^\n]*/g, "")
+    .replace(spRe, "")
+    .replace(spCanaryRe, "")
     .trim();
-  if (!stripped) return true; // Message was ONLY ProteClaw injections — treat as system
-  return t.startsWith('[ProteClaw L') ||
-         t.startsWith('[ProteClaw:') ||
+  if (!stripped) return true; // Message was only security plugin metadata — treat as system
+  const spPrefix = `[${SP} L`;
+  const spColonPrefix = `[${SP}:`;
+  const spSourceTag = `[${SP.toLowerCase()}:source=`;
+  return t.startsWith(spPrefix) ||
+         t.startsWith(spColonPrefix) ||
          t.startsWith('System:') ||
          t.startsWith('GatewayRestart:') ||
-         t.includes('[proteclaw:source=') ||
+         t.includes(spSourceTag) ||
          /(?:^|\s)HEARTBEAT_OK(?:\s|$)/.test(t) ||
          /(?:^|\s)NO_REPLY(?:\s|$)/.test(t) ||
          t.startsWith('Read HEARTBEAT.md') ||
@@ -569,13 +575,17 @@ function isSystemMessage(text) {
          stripped.includes('sessionKey agent:main:subagent:');
 }
 
-// Strip ProteClaw injections from user messages before sending to client
-function cleanProteClawInjections(text) {
+// Strip security plugin metadata from user messages before sending to client
+// Configure SECURITY_TAG_PREFIX in .env to match your security plugin's tag format
+function cleanSystemMetadata(text) {
+  const SP = process.env.SECURITY_TAG_PREFIX || 'SecurityPlugin';
+  const spMemRe = new RegExp(`\\[${SP} Memory\\] Auto-recalled[\\s\\S]*?(?=\\n\\[(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun) |$)`, 'g');
+  const spCanaryRe = new RegExp(`\\[${SP} Canary\\][^\\n]*`, 'g');
   return (text || "")
-    // Strip ProteClaw auto-recalled memory sections
-    .replace(/\[ProteClaw Memory\] Auto-recalled[\s\S]*?(?=\n\[(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun) |$)/g, "")
-    // Strip ProteClaw canary tokens
-    .replace(/\[ProteClaw Canary\][^\n]*/g, "")
+    // Strip security plugin auto-recalled memory sections
+    .replace(spMemRe, "")
+    // Strip security plugin canary tokens
+    .replace(spCanaryRe, "")
     // Strip gateway system notes (abort notices, etc.)
     .replace(/^Note: The previous agent run was aborted[^\n]*\n?/gm, "")
     // Strip message_id and genui tags
@@ -620,10 +630,10 @@ function parseTranscript(filePath) {
         if (!text.trim()) continue;
         if (isSystemMessage(text)) continue;
 
-        // Strip ProteClaw injections from user messages (auto-recall + canary)
+        // Strip security plugin metadata from user messages
         if (role === "user") {
-          text = cleanProteClawInjections(text);
-          if (!text) continue; // Was only ProteClaw metadata
+          text = cleanSystemMetadata(text);
+          if (!text) continue; // Was only security plugin metadata
         }
 
         messages.push({
@@ -650,7 +660,7 @@ function findTranscriptFiles(sessionId) {
     .filter((f) => {
       if (!f.startsWith(baseId)) return false;
       if (f.endsWith(".lock")) return false;
-      if (f.includes(".proteclaw-backup")) return false;  // Skip ProteClaw backup files
+      if (f.includes(".security-backup")) return false;  // Skip security plugin backup files
       return f.includes(".jsonl");
     })
     .map((f) => ({
@@ -1283,7 +1293,7 @@ function narrateForSpeech(rawText, callback) {
 Rules:
 - Describe tables conversationally (e.g. "the table shows X has a value of Y")
 - Describe code blocks briefly (e.g. "there's a bash command that restarts the service")
-- Read URLs as just the domain name (e.g. "scratchy dot proteclaw dot fr")
+- Read URLs as just the domain name (e.g. "scratchy dot example dot com")
 - Convert technical notation into plain speech
 - Keep the same meaning and information — don't add or remove ideas
 - Keep it concise — spoken language should be shorter than written

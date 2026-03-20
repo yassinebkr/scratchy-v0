@@ -229,7 +229,7 @@ scratchy_session={id}; HttpOnly; SameSite=Strict; Path=/; Max-Age=2592000; Secur
 This is **compatible with all incognito modes**:
 - `HttpOnly` — prevents JS access but cookies still work ✓
 - `SameSite=Strict` — correct for same-origin auth ✓
-- `Secure` — requires HTTPS (scratchy.clawos.fr uses HTTPS) ✓
+- `Secure` — requires HTTPS (scratchy.example.com uses HTTPS) ✓
 - Cookies in incognito work within the session; they're just cleared on window close ✓
 
 No changes needed for cookie handling.
@@ -240,7 +240,7 @@ No changes needed for cookie handling.
 
 ### Test 1: Fresh Installation Bootstrap (Incognito)
 1. Clear all auth data (or use fresh install with no admin)
-2. Open `https://scratchy.clawos.fr` in incognito/private window
+2. Open `https://scratchy.example.com` in incognito/private window
 3. **Expected:** Language selector appears first
 4. Select a language
 5. **Expected (with Fix 1):** Registration form appears (not login form)
@@ -249,7 +249,7 @@ No changes needed for cookie handling.
 
 ### Test 2: Existing Operator Login (Incognito)
 1. Ensure an operator account exists (invited by admin)
-2. Open `https://scratchy.clawos.fr` in incognito
+2. Open `https://scratchy.example.com` in incognito
 3. **Expected (with Fix 2):** If browser language matches en/fr/ar/it, skip language selector
 4. If not matched, language selector shown — select one
 5. **Expected:** Login form appears
@@ -258,7 +258,7 @@ No changes needed for cookie handling.
 8. **Expected:** Main app connects to correct user session (not `agent:main:main`)
 
 ### Test 3: Safari Private Browsing (iOS)
-1. Open Safari → Private → navigate to `https://scratchy.clawos.fr`
+1. Open Safari → Private → navigate to `https://scratchy.example.com`
 2. **Expected:** Language selector or auto-detected language
 3. Log in with valid credentials
 4. **Expected:** Redirect to main app, WebSocket connects successfully

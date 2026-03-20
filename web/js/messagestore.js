@@ -210,8 +210,8 @@ class MessageStore {
   _normalize(text) {
     if (!text) return "";
     return text
-      .replace(/\[ProteClaw Canary\][^\n]*/g, "")
-      .replace(/\[ProteClaw Memory\] Auto-recalled[\s\S]*?(?=\[(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s|\[message_id:|$)/g, "") // strip auto-recalled memory sections
+      .replace(/\[SecurityPlugin Canary\][^\n]*/g, "")
+      .replace(/\[SecurityPlugin Memory\] Auto-recalled[\s\S]*?(?=\[(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s|\[message_id:|$)/g, "") // strip system metadata
       .replace(/\n?\[message_id:[^\]]*\]/g, "")
       .replace(/\n?\[genui:\w+\]/g, "")
       .replace(/```[\s\S]*?```/g, "") // strip code blocks for stable hashing
@@ -516,8 +516,8 @@ class DOMSync {
 
   _cleanText(text) {
     return (text || "")
-      .replace(/\[ProteClaw Memory\] Auto-recalled[\s\S]*?(?=\n\[(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun) |$)/g, "")
-      .replace(/\[ProteClaw Canary\][^\n]*/g, "")
+      .replace(/\[SecurityPlugin Memory\] Auto-recalled[\s\S]*?(?=\n\[(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun) |$)/g, "")
+      .replace(/\[SecurityPlugin Canary\][^\n]*/g, "")
       .replace(/\n?\[message_id:[^\]]*\]/g, "")
       .replace(/\n?\[genui:\w+\]/g, "")
       .replace(/^\s*\n/gm, "")

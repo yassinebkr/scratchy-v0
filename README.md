@@ -99,4 +99,4 @@ MIT — see [LICENSE](LICENSE)
 
 ## Credits
 
-Built by [@yassinebkr](https://github.com/yassinebkr) as part of the [ClawOS](https://clawos.fr) project.
+Built by [@yassinebkr](https://github.com/yassinebkr).

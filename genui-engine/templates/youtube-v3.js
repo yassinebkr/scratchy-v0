@@ -50,7 +50,7 @@ class YouTubeWidget {
     this.oauth2Client = new google.auth.OAuth2(
       this.creds.clientId,
       this.creds.clientSecret,
-      this.creds.redirectUri || 'https://scratchy.clawos.fr/auth/google/callback'
+      this.creds.redirectUri || 'https://scratchy.example.com/auth/google/callback'
     );
     if (this.session && this.session.tokens) {
       this.oauth2Client.setCredentials(this.session.tokens);

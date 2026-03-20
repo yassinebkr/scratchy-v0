@@ -923,8 +923,8 @@
 
     _cleanText: function(text) {
       return (text || "")
-        .replace(/\[ProteClaw Memory\] Auto-recalled[\s\S]*?(?=\n\[(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun) |$)/g, "")
-        .replace(/\[ProteClaw Canary\][^\n]*/g, "")
+        .replace(/\[SecurityPlugin Memory\] Auto-recalled[\s\S]*?(?=\n\[(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun) |$)/g, "")
+        .replace(/\[SecurityPlugin Canary\][^\n]*/g, "")
         .replace(/\n?\[message_id:[^\]]*\]/g, "")
         .replace(/\n?\[genui:\w+\]/g, "")
         .replace(/^\s*\n/gm, "")

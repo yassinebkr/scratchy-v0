@@ -27,7 +27,7 @@
 
   function addChatMsg(role, text) {
     text = (text || "")
-      .replace(/\[ClawOS Canary\][^\n]*/g, "")
+      .replace(/\[SecurityPlugin Canary\][^\n]*/g, "")
       .replace(/\[message_id:[^\]]*\]/g, "")
       .replace(/\[genui:\w+\]/g, "")
       .replace(/```scratchy-canvas[\s\S]*?```/g, "")
@@ -588,7 +588,7 @@
       .replace(/```scratchy-toon[\s\S]*?```/g, "")
       .replace(/```scratchy-tpl[\s\S]*?```/g, "")
       .replace(/```scratchy-ui[\s\S]*?```/g, "")
-      .replace(/\[ClawOS Canary\][^\n]*/g, "")
+      .replace(/\[SecurityPlugin Canary\][^\n]*/g, "")
       .replace(/\[message_id:[^\]]*\]/g, "")
       .replace(/\[genui:\w+\]/g, "")
       .trim();

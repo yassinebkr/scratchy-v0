@@ -4,7 +4,7 @@
 
 > **Last updated:** February 23, 2026
 >
-> Technical reference for the ClawOS / Scratchy infrastructure. This document covers the server, networking, services, directory layout, deployment workflow, and operational notes.
+> Technical reference for the Scratchy infrastructure. This document covers the server, networking, services, directory layout, deployment workflow, and operational notes.
 
 ---
 
@@ -53,8 +53,8 @@ sudo ufw status
 
 | URL                        | Target              |
 |----------------------------|---------------------|
-| `scratchy.clawos.fr`      | Webchat (port 3001) |
-| `scratchyui.clawos.fr`    | Canvas (port 3002)  |
+| `scratchy.example.com`      | Webchat (port 3001) |
+| `scratchyui.example.com`    | Canvas (port 3002)  |
 
 ### ⚠️ Critical Warnings
 
@@ -96,7 +96,7 @@ The migration to Contabo was motivated by cost and reliability. The switch from 
 
 ## 2. Domain & DNS
 
-- **Domain**: `clawos.fr`
+- **Domain**: `example.com`
 - **Registrar**: OVH
 - **DNS Provider**: Cloudflare
 
@@ -106,8 +106,8 @@ The domain is registered at OVH, but the nameservers are pointed to Cloudflare. 
 
 | Subdomain                | Purpose                  | Backend Target     |
 |--------------------------|--------------------------|--------------------|
-| `scratchy.clawos.fr`    | Scratchy webchat + API   | `localhost:3001`   |
-| `scratchyui.clawos.fr`  | Scratchy Canvas UI       | `localhost:3002`   |
+| `scratchy.example.com`    | Scratchy webchat + API   | `localhost:3001`   |
+| `scratchyui.example.com`  | Scratchy Canvas UI       | `localhost:3002`   |
 
 Both subdomains are routed exclusively through the Cloudflare Tunnel. There are no direct DNS A/AAAA records pointing to the server's IP for these subdomains.
 
@@ -129,8 +129,8 @@ The infrastructure uses a **named Cloudflare Tunnel** (not a quick tunnel) to ex
 
 | Public Hostname          | Local Origin         |
 |--------------------------|----------------------|
-| `scratchy.clawos.fr`    | `localhost:3001`     |
-| `scratchyui.clawos.fr`  | `localhost:3002`     |
+| `scratchy.example.com`    | `localhost:3001`     |
+| `scratchyui.example.com`  | `localhost:3002`     |
 
 ### Operational Notes
 
@@ -182,7 +182,7 @@ Scratchy is the primary web application — a real-time webchat interface with a
 | Description | Canvas rendering service for rich UI components  |
 | Restart     | `systemctl --user restart scratchy-canvas`       |
 
-The Canvas service renders interactive UI components (widgets, visualizations) and is accessed via `scratchyui.clawos.fr`. Canvas state is persisted in `/home/youruser/scratchy/.canvas-state.json`.
+The Canvas service renders interactive UI components (widgets, visualizations) and is accessed via `scratchyui.example.com`. Canvas state is persisted in `/home/youruser/scratchy/.canvas-state.json`.
 
 #### OpenClaw Gateway (`openclaw-gateway.service`)
 
@@ -308,7 +308,7 @@ Scratchy follows a simple, direct deployment model — no CI/CD pipeline, no sta
 1. Edit files         →  SSH or agent edits directly on server
 2. Syntax check       →  node -c serve.js
 3. Restart service    →  systemctl --user restart scratchy
-4. Smoke test         →  curl localhost:3001  (or browser at scratchy.clawos.fr)
+4. Smoke test         →  curl localhost:3001  (or browser at scratchy.example.com)
 5. Commit & push      →  git add . && git commit -m "..." && git push
 ```
 
@@ -389,7 +389,7 @@ There is no automated backup system in place. Critical data (especially `.scratc
                      │  (tunnel)    │
                      └──┬───────┬──┘
                         │       │
-          scratchy.clawos.fr  scratchyui.clawos.fr
+          scratchy.example.com  scratchyui.example.com
                         │       │
                    ┌────┴──┐ ┌──┴─────┐
                    │:3001  │ │ :3002  │
@@ -404,7 +404,7 @@ There is no automated backup system in place. Critical data (especially `.scratc
 ```
 
 **Traffic flow:**
-1. User connects to `scratchy.clawos.fr` via browser.
+1. User connects to `scratchy.example.com` via browser.
 2. Cloudflare edge receives the request and routes it through the named tunnel.
 3. `cloudflared` on the server forwards the request to `localhost:3001` (Scratchy) or `localhost:3002` (Canvas).
 4. Scratchy communicates with the OpenClaw Gateway on `localhost:28945` for AI operations.

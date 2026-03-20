@@ -37,7 +37,7 @@ class GoogleCalendarWidget {
     this.oauth2Client = new google.auth.OAuth2(
       this.creds.clientId,
       this.creds.clientSecret,
-      this.creds.redirectUri || 'https://scratchy.clawos.fr/auth/google/callback'
+      this.creds.redirectUri || 'https://scratchy.example.com/auth/google/callback'
     );
     if (this.session && this.session.tokens) {
       this.oauth2Client.setCredentials(this.session.tokens);
@@ -150,7 +150,7 @@ class GoogleCalendarWidget {
     if (!clientId || !clientSecret) {
       return { ops: [{ op: 'upsert', id: 'cal-error', type: 'alert', data: { title: 'Missing fields', message: 'Both Client ID and Secret are required.', severity: 'warning' } }] };
     }
-    this.creds = { clientId: clientId.trim(), clientSecret: clientSecret.trim(), redirectUri: 'https://scratchy.clawos.fr/auth/google/callback' };
+    this.creds = { clientId: clientId.trim(), clientSecret: clientSecret.trim(), redirectUri: 'https://scratchy.example.com/auth/google/callback' };
     this.saveCreds(this.creds);
     this.initOAuth();
     return this.showAuthLink();

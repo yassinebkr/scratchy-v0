@@ -1,6 +1,6 @@
 /**
  * Email Widget — Scratchy GenUI
- * Dual backend: Gmail (read + human-only send) + Resend (@clawos.fr)
+ * Dual backend: Gmail (read + human-only send) + Resend (@example.com)
  * Prefix: mail-
  * 
  * Security model:
@@ -40,7 +40,7 @@ class EmailWidget {
   _initOAuth() {
     this.oauth2Client = new google.auth.OAuth2(
       this.creds.clientId, this.creds.clientSecret,
-      this.creds.redirectUri || 'https://scratchy.clawos.fr/auth/google/callback'
+      this.creds.redirectUri || 'https://scratchy.example.com/auth/google/callback'
     );
     if (this.session && this.session.tokens) {
       this.oauth2Client.setCredentials(this.session.tokens);
@@ -290,11 +290,11 @@ class EmailWidget {
       ...this.nav('compose'),
       { op: 'upsert', id: 'mail-compose-switch', type: 'buttons', data: { buttons: [
         { label: '📧 Send as Gmail', action: 'mail-compose', style: !isResend ? 'primary' : 'ghost' },
-        { label: '🏢 Send as @clawos.fr', action: 'mail-compose-resend', style: isResend ? 'primary' : 'ghost' }
+        { label: '🏢 Send as @example.com', action: 'mail-compose-resend', style: isResend ? 'primary' : 'ghost' }
       ]}},
       { op: 'upsert', id: 'mail-compose-form', type: 'form', data: {
         id: 'mail-compose-form',
-        title: isResend ? 'Compose (from @clawos.fr)' : 'Compose (from Gmail)',
+        title: isResend ? 'Compose (from @example.com)' : 'Compose (from Gmail)',
         fields: [
           { name: 'to', type: 'email', label: 'To', required: true, placeholder: isResend ? 'your-email@example.com (test mode)' : '', value: prefill.to || '' },
           { name: 'subject', type: 'text', label: 'Subject', required: true, value: prefill.subject || '' },
@@ -357,7 +357,7 @@ class EmailWidget {
 
     const inbox = await this.getInbox();
     inbox.ops.splice(1, 0, { op: 'upsert', id: 'mail-msg-sent', type: 'alert', data: {
-      title: 'Sent!', message: `Email sent to ${to} via Resend (@clawos.fr).`, severity: 'success'
+      title: 'Sent!', message: `Email sent to ${to} via Resend (@example.com).`, severity: 'success'
     }});
     return inbox;
   }
@@ -494,8 +494,8 @@ class EmailWidget {
         <!-- Header -->
         <tr><td style="padding:24px 32px;background:#18181f;border-radius:12px 12px 0 0;border-bottom:1px solid #2a2a35">
           <table width="100%"><tr>
-            <td style="font-size:20px;font-weight:700;color:#e2e2e8">🔧 ClawOS</td>
-            <td align="right" style="font-size:12px;color:#71717a">Secured by ClawOS</td>
+            <td style="font-size:20px;font-weight:700;color:#e2e2e8">🔧 Scratchy</td>
+            <td align="right" style="font-size:12px;color:#71717a">Secured by Scratchy</td>
           </tr></table>
         </td></tr>
         <!-- Body -->
@@ -512,14 +512,14 @@ class EmailWidget {
           </table>
         </td></tr>` : ''}
         <!-- CTA Button -->
-        ${body.includes('scratchy.clawos.fr') ? `
+        ${body.includes('scratchy.example.com') ? `
         <tr><td align="center" style="padding:0 32px 28px;background:#18181f">
-          <a href="https://scratchy.clawos.fr" style="display:inline-block;background:#6366f1;color:#ffffff;text-decoration:none;padding:12px 32px;border-radius:8px;font-weight:600;font-size:15px">Log In to ClawOS →</a>
+          <a href="https://scratchy.example.com" style="display:inline-block;background:#6366f1;color:#ffffff;text-decoration:none;padding:12px 32px;border-radius:8px;font-weight:600;font-size:15px">Log In to Scratchy →</a>
         </td></tr>` : ''}
         <!-- Footer -->
         <tr><td style="padding:20px 32px;background:#18181f;border-radius:0 0 12px 12px;border-top:1px solid #2a2a35">
           <p style="margin:0;color:#52525b;font-size:12px;line-height:1.5">
-            This is an automated message from ClawOS. Please change your password after first login.<br>
+            This is an automated message from Scratchy. Please change your password after first login.<br>
             If you didn't expect this email, you can safely ignore it.
           </p>
         </td></tr>

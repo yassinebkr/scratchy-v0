@@ -783,8 +783,8 @@ class ScratchyConnection {
   _isSystemNoise(text) {
     if (!text) return true;
     var t = text.trim();
-    // Strip ProteClaw canary prefix if present
-    t = t.replace(/^\[ProteClaw Canary\][^\n]*\n?/, "").trim();
+    // Strip security metadata prefix if present
+    t = t.replace(/^\[SecurityPlugin Canary\][^\n]*\n?/, "").trim();
     if (!t) return true;
 
     // Sub-agent completions
@@ -796,8 +796,8 @@ class ScratchyConnection {
     // System/exec notifications from OpenClaw
     if (/^System:\s*\[/m.test(t)) return true;           // "System: [2026-02-17 11:09:17 GMT+1] Exec completed..."
     if (/^GatewayRestart:/m.test(t)) return true;
-    if (/^\[ProteClaw[ :L]/m.test(t) && !/\[ProteClaw Memory\]/m.test(t)) return true;  // [ProteClaw L0], [ProteClaw:source=...] — but NOT [ProteClaw Memory] (contains user messages)
-    if (/\[proteclaw:source=/m.test(t)) return true;        // trust metadata tags
+    if (/^\[SecurityPlugin[ :L]/m.test(t) && !/\[SecurityPlugin Memory\]/m.test(t)) return true;  // security tags (but not memory sections)
+    if (/\[securityplugin:source=/m.test(t)) return true;        // system metadata tags
 
     // Heartbeats, cron, internal — use loose matching (prefix/suffix) like gateway
     if (/(?:^|\s)NO_REPLY(?:\s|$)/.test(t)) return true;

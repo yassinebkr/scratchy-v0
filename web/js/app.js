@@ -1054,11 +1054,11 @@
   // Strip metadata tags that OpenClaw adds to messages
   function cleanMetadata(text) {
     return (text || "")
-      .replace(/\[ProteClaw Canary\][^\n]*/g, "")
+      .replace(/\[SecurityPlugin Canary\][^\n]*/g, "")
       .replace(/\n?\[message_id:[^\]]*\]/g, "")
       .replace(/\n?\[genui:\w+\]/g, "")
-      .replace(/^\[ProteClaw[ :L][^\n]*/gm, "")
-      .replace(/\[proteclaw:source=[^\]]*\]/g, "")
+      .replace(/^\[SecurityPlugin[ :L][^\n]*/gm, "")
+      .replace(/\[securityplugin:source=[^\]]*\]/g, "")
       .trim();
   }
 
@@ -1086,13 +1086,13 @@
   // Filter system/internal messages that shouldn't render in chat
   function isSystemMessage(text) {
     if (!text) return true;
-    var t = text.trim().replace(/^\[ProteClaw Canary\][^\n]*\n?/, "").trim();
+    var t = text.trim().replace(/^\[SecurityPlugin Canary\][^\n]*\n?/, "").trim();
     if (!t) return true;
-    return t.startsWith("[ProteClaw L") ||
-           t.startsWith("[ProteClaw:") ||
+    return t.startsWith("[SecurityPlugin L") ||
+           t.startsWith("[SecurityPlugin:") ||
            /^System:\s*\[/m.test(t) ||
            t.startsWith("GatewayRestart:") ||
-           t.indexOf("[proteclaw:source=") !== -1 ||
+           t.indexOf("[securityplugin:source=") !== -1 ||
            t === "HEARTBEAT_OK" ||
            t === "NO_REPLY" ||
            t.startsWith("Read HEARTBEAT.md") ||
@@ -1105,12 +1105,12 @@
 
   // ------------------------------------------
   // Strip gateway-injected prefixes from user message text
-  // Mirrors server-side cleanProteClawInjections in serve.js
+  // Mirrors server-side cleanSystemMetadata
   // ------------------------------------------
   function cleanGatewayText(text) {
     return (text || "")
-      .replace(/\[ProteClaw Memory\] Auto-recalled[\s\S]*?(?=\n\[(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun) |$)/g, "")
-      .replace(/\[ProteClaw Canary\][^\n]*/g, "")
+      .replace(/\[SecurityPlugin Memory\] Auto-recalled[\s\S]*?(?=\n\[(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun) |$)/g, "")
+      .replace(/\[SecurityPlugin Canary\][^\n]*/g, "")
       .replace(/^Note: The previous agent run was aborted[^\n]*\n?/gm, "")
       .replace(/\n?\[message_id:[^\]]*\]/g, "")
       .replace(/\n?\[genui:\w+\]/g, "")
@@ -3094,7 +3094,7 @@
   function addCanvasChatMsg(role, text) {
     if (!canvasChatMessages) return;
     text = (text || "")
-      .replace(/\[ProteClaw Canary\][^\n]*/g, "")
+      .replace(/\[SecurityPlugin Canary\][^\n]*/g, "")
       .replace(/\[message_id:[^\]]*\]/g, "")
       .replace(/\[genui:\w+\]/g, "")
       .replace(/```scratchy-canvas[\s\S]*?```/g, "[canvas update]")
@@ -3785,7 +3785,7 @@
       .replace(/```scratchy-toon[\s\S]*?```/g, "")
       .replace(/```scratchy-a2ui[\s\S]*?```/g, "")
       .replace(/```scratchy-tpl[\s\S]*?```/g, "")
-      .replace(/\[ProteClaw Canary\][^\n]*/g, "")
+      .replace(/\[SecurityPlugin Canary\][^\n]*/g, "")
       .replace(/\[message_id:[^\]]*\]/g, "")
       .replace(/\[genui:\w+\]/g, "")
       .trim();
