@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Environment & secrets
+.env
+.gcal-creds.json
+.gcal-session.json
+.spotify-session.json
+.sn-session.json
+.sn-session.json.bak
+encryption.key
+*.enc
+
+# Runtime data
+.scratchy-data/
+.canvas-state.json
+.canvas-history.json
+
+# Build artifacts
+target/
+src-tauri/target/
+src-tauri/WixTools/
+
+# Versioning / deploy
+versions/
+
+# Backups
+*.bak
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test artifacts
+test-compaction-progress-standalone.js

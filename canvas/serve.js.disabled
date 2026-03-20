@@ -1,0 +1,895 @@
+#!/usr/bin/env node
+// ============================================
+// Scratchy — Canvas Server (Phase 4)
+// ============================================
+// A lightweight server for canvas features.
+//
+// Usage: node serve.js [port] [gatewayPort]
+// Default: port 3002, gateway 28945
+//
+// Auth:
+//   - Reads token from SCRATCHY_TOKEN env or ~/.openclaw/openclaw.json
+//   - POST /api/auth sets 'scratchy_canvas_auth' cookie (HttpOnly)
+//   - All API/WS requests validate this cookie against the server token.
+//
+// WebSocket Proxy:
+//   - Connects clients to local Gateway (port 28945).
+//   - Intercepts the first 'connect' frame to inject the server-side auth token.
+//
+// State:
+//   - In-memory canvas state (Map<sessionKey, State>)
+//   - No disk persistence yet.
+
+const http = require("http");
+const fs = require("fs");
+const path = require("path");
+const os = require("os");
+const crypto = require("crypto");
+const url = require("url");
+
+// Try to load 'ws' module (must be present in node_modules)
+let WebSocket;
+try {
+  WebSocket = require("ws");
+} catch (e) {
+  console.error("❌ 'ws' module not found. Run 'npm install ws' in this directory.");
+  process.exit(1);
+}
+
+// ── Configuration ──
+const PORT = parseInt(process.argv[2] || "3002", 10);
+const GATEWAY_PORT = parseInt(process.argv[3] || "28945", 10);
+const WEB_DIR = path.join(__dirname, "web");
+const OPENCLAW_DIR = path.join(os.homedir(), ".openclaw");
+
+// ── Message Store ──
+const { MessageStore } = require("./lib/message-store");
+const { extractAssistantText } = require("./lib/extract-text");
+const { A2UIParser } = require("./lib/a2ui-parser");
+const StandardNotesAPI = require("./lib/standard-notes-api");
+
+// ── v2 Protocol ──
+const { MessageValidator } = require("./lib/message-validator");
+const { SurfaceState } = require("./lib/surface-state");
+const { V1Compat } = require("./lib/v1-compat");
+const { ProtocolRouter } = require("./lib/protocol-router");
+const { RunTracker } = require("./lib/run-tracker");
+
+const { RateLimiter } = require("./lib/rate-limiter");
+
+const msgStore = new MessageStore();
+const standardNotesAPI = new StandardNotesAPI();
+const wsRateLimiter = new RateLimiter({ maxPerMinute: 60, maxPerSecond: 10, burstSize: 15 });
+
+// ── State ──
+// Map<sessionKey, State> (v1 compat — flat component map)
+// State: { components: {}, layout: "auto", version: 0, sessionKey: "..." }
+const canvasStates = new Map();
+
+// v2 state (multi-surface, data binding)
+const surfaceStates = new Map(); // sessionKey -> SurfaceState
+
+// v2 protocol singletons
+const v1Compat = new V1Compat();
+const validator = new MessageValidator();
+const runTracker = new RunTracker();
+
+// Forward AG-UI events to all connected canvas clients
+runTracker.on('*', (event) => {
+  broadcast({ type: "event", event: "ag-ui", payload: event });
+});
+
+function getSurfaceState(sessionKey) {
+  if (!surfaceStates.has(sessionKey)) surfaceStates.set(sessionKey, new SurfaceState());
+  return surfaceStates.get(sessionKey);
+}
+
+// Parse scratchy-canvas ops from assistant message text
+function parseCanvasOps(text) {
+  const ops = [];
+  const re = /```scratchy-canvas\s*\n([\s\S]*?)```/g;
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    const lines = m[1].split("\n");
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      try {
+        const op = JSON.parse(trimmed);
+        if (op && op.op) ops.push(op);
+      } catch (e) {}
+    }
+  }
+  return ops;
+}
+
+// ── Auth Token Loader ──
+function loadAuthToken() {
+  // 1. Environment variable
+  if (process.env.SCRATCHY_TOKEN) return process.env.SCRATCHY_TOKEN;
+
+  // 2. OpenClaw config files
+  const configPaths = [
+    path.join(OPENCLAW_DIR, "openclaw.json"),
+    path.join(OPENCLAW_DIR, "config.yaml"),
+    path.join(OPENCLAW_DIR, "config.yml"),
+  ];
+
+  for (const p of configPaths) {
+    if (!fs.existsSync(p)) continue;
+    try {
+      const content = fs.readFileSync(p, "utf-8");
+      // Try JSON first
+      if (p.endsWith(".json")) {
+        const cfg = JSON.parse(content);
+        if (cfg?.gateway?.auth?.token) return cfg.gateway.auth.token;
+      }
+      // Regex fallback
+      const tokenMatch = content.match(/"token":\s*"([^"]+)"/) || content.match(/\btoken:\s+["']?([^\s"',}]+)/);
+      if (tokenMatch) return tokenMatch[1];
+    } catch { /* ignore errors */ }
+  }
+  return null;
+}
+
+const AUTH_TOKEN = loadAuthToken();
+if (!AUTH_TOKEN) {
+  console.error("⚠️  No auth token found. Set SCRATCHY_TOKEN env or configure gateway.auth.token.");
+  process.exit(1);
+}
+
+// ── Helpers ──
+function timingSafeEqual(a, b) {
+  if (typeof a !== "string" || typeof b !== "string") return false;
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
+function getCookie(req, name) {
+  const cookieHeader = req.headers.cookie;
+  if (!cookieHeader) return null;
+  const cookies = cookieHeader.split(";");
+  for (const c of cookies) {
+    const [key, val] = c.trim().split("=");
+    if (key === name) return val;
+  }
+  return null;
+}
+
+function setSecurityHeaders(res) {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "no-referrer");
+  res.setHeader("Cache-Control", "no-store");
+  res.setHeader("Content-Security-Policy",
+    "default-src 'self'; " +
+    "script-src 'self'; " +
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+    "font-src https://fonts.gstatic.com; " +
+    "img-src 'self' data: blob: https:; " +
+    "connect-src 'self' ws: wss:; " +
+    "media-src 'self' blob:; " +
+    "frame-ancestors 'none'; " +
+    "base-uri 'self'; " +
+    "form-action 'self'"
+  );
+}
+
+// ── Rate Limiting ──
+const loginLimiter = {
+  attempts: new Map(), // ip -> { count, resetAt }
+  max: 5,
+  window: 60000,
+  check(ip) {
+    const now = Date.now();
+    const entry = this.attempts.get(ip);
+    if (!entry || now > entry.resetAt) {
+      this.attempts.set(ip, { count: 1, resetAt: now + this.window });
+      return true;
+    }
+    entry.count++;
+    return entry.count <= this.max;
+  }
+};
+
+// ── HTTP Server ──
+const server = http.createServer((req, res) => {
+  console.log("[HTTP]", req.method, req.url, "from", req.socket.remoteAddress);
+  const reqUrl = new URL(req.url, `http://localhost:${PORT}`);
+  const pathname = reqUrl.pathname;
+
+  // 1. Auth Endpoint
+  if (pathname === "/api/auth" && req.method === "POST") {
+    setSecurityHeaders(res);
+    const ip = req.socket.remoteAddress;
+
+    if (!loginLimiter.check(ip)) {
+      res.writeHead(429, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Too many attempts" }));
+      return;
+    }
+
+    let body = "";
+    req.on("data", chunk => {
+      if (body.length < 1024) body += chunk;
+    });
+    req.on("end", () => {
+      try {
+        const { token } = JSON.parse(body);
+        if (token && timingSafeEqual(token, AUTH_TOKEN)) {
+          // Success
+          // Set both cookie names so login.js (symlinked from chat) and canvas config both work
+          var cookie1 = `scratchy_canvas_auth=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000`;
+          var cookie2 = `scratchy_auth=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000`;
+          res.writeHead(200, {
+            "Content-Type": "application/json",
+            "Set-Cookie": [cookie1, cookie2]
+          });
+          res.end(JSON.stringify({ ok: true }));
+        } else {
+          // Failure
+          // Simulate timing to prevent enumeration? (Already safe via timingSafeEqual)
+          res.writeHead(401, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Invalid token" }));
+        }
+      } catch {
+        res.writeHead(400);
+        res.end(JSON.stringify({ error: "Invalid JSON" }));
+      }
+    });
+    return;
+  }
+
+  // 2. Validate Auth for all other routes
+  const cookieToken = getCookie(req, "scratchy_canvas_auth") || getCookie(req, "scratchy_auth");
+  const queryToken = reqUrl.searchParams.get("token");
+  const authedByCookie = cookieToken && timingSafeEqual(cookieToken, AUTH_TOKEN);
+  const authedByQuery = queryToken && timingSafeEqual(queryToken, AUTH_TOKEN);
+  const isAuthed = authedByCookie || authedByQuery;
+
+  // If authed by query param but no cookie, set cookie + redirect to clean URL
+  if (authedByQuery && !authedByCookie && (pathname === "/" || pathname === "/index.html")) {
+    var cookie1 = `scratchy_canvas_auth=${AUTH_TOKEN}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000`;
+    var cookie2 = `scratchy_auth=${AUTH_TOKEN}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000`;
+    res.writeHead(302, { 
+      "Set-Cookie": [cookie1, cookie2],
+      "Location": "/"
+    });
+    res.end();
+    return;
+  }
+
+  if (!isAuthed) {
+    // If requesting API, return 401
+    if (pathname.startsWith("/api/")) {
+      setSecurityHeaders(res);
+      res.writeHead(401, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Unauthorized" }));
+      return;
+    }
+    // Otherwise serve login page (from static) or index
+    // We'll let static handler serve login.html if it exists, or fallback
+    if (pathname === "/" || pathname === "/index.html") {
+        // If not authed, serve login.html
+        const loginPath = path.join(WEB_DIR, "login.html");
+        if (fs.existsSync(loginPath)) {
+            res.writeHead(200, { "Content-Type": "text/html" });
+            fs.createReadStream(loginPath).pipe(res);
+            return;
+        }
+    }
+  }
+
+  // 3. Canvas State Endpoint
+  // CORS preflight for canvas API
+  if (pathname === "/api/canvas" && req.method === "OPTIONS") {
+    res.writeHead(204, {
+      "Access-Control-Allow-Origin": req.headers.origin || "*",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+      "Access-Control-Allow-Credentials": "true",
+      "Access-Control-Max-Age": "86400"
+    });
+    res.end();
+    return;
+  }
+
+  // POST /api/canvas — accept state push from chat server
+  if (pathname === "/api/canvas" && req.method === "POST") {
+    setSecurityHeaders(res);
+    res.setHeader("Access-Control-Allow-Origin", req.headers.origin || "*");
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    let body = "";
+    req.on("data", (chunk) => { body += chunk; });
+    req.on("end", () => {
+      try {
+        const { sessionKey, ops } = JSON.parse(body);
+        const sk = sessionKey || "default";
+        if (!canvasStates.has(sk)) {
+          canvasStates.set(sk, { components: {}, layout: "auto", version: 0, sessionKey: sk });
+        }
+        const st = canvasStates.get(sk);
+        for (const op of (ops || [])) {
+          switch (op.op) {
+            case "clear": st.components = {}; break;
+            case "upsert":
+              if (op.id && op.type) st.components[op.id] = { id: op.id, type: op.type, data: op.data || {}, layout: op.layout || { zone: "auto", order: 0 } };
+              break;
+            case "patch":
+              if (op.id && st.components[op.id] && op.data) Object.assign(st.components[op.id].data, op.data);
+              break;
+            case "remove": if (op.id) delete st.components[op.id]; break;
+            case "layout": if (op.mode) st.layout = op.mode; break;
+            case "move":
+              if (op.id && st.components[op.id] && op.layout) Object.assign(st.components[op.id].layout, op.layout);
+              break;
+          }
+        }
+        st.version++;
+        // Translate v1 ops → v2 envelopes
+        const envelopes = v1Compat.translate(ops, sk);
+        // Update v2 surface state
+        const ss = getSurfaceState(sk);
+        for (const env of envelopes) {
+          if (env.payload.surfaceUpdate) ss.updateComponents(env.payload.surfaceUpdate.surfaceId || 'main', []);
+          if (env.payload.dataModelUpdate) {
+            const dmu = env.payload.dataModelUpdate;
+            ss.updateData(dmu.surfaceId || 'main', dmu.path, dmu.contents);
+          }
+        }
+        // Broadcast v1 + v2 to connected canvas clients
+        broadcast({ type: "event", event: "canvas-update", payload: { ops, envelopes, state: st } });
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true, version: st.version }));
+      } catch (e) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
+  if (pathname === "/api/canvas" && req.method === "GET") {
+    setSecurityHeaders(res);
+    res.setHeader("Access-Control-Allow-Origin", req.headers.origin || "*");
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    const sessionKey = reqUrl.searchParams.get("session") || "default";
+    
+    // Initialize if missing
+    if (!canvasStates.has(sessionKey)) {
+      canvasStates.set(sessionKey, {
+        components: {},
+        layout: "auto",
+        version: 0,
+        sessionKey: sessionKey
+      });
+    }
+    
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify(canvasStates.get(sessionKey)));
+    return;
+  }
+
+  // 3b. Surface State API (v2)
+  if (pathname === "/api/v2/surface" && req.method === "GET") {
+    setSecurityHeaders(res);
+    res.setHeader("Access-Control-Allow-Origin", req.headers.origin || "*");
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    const sessionKey = reqUrl.searchParams.get("session") || "default";
+    const surfaceId = reqUrl.searchParams.get("surface") || "main";
+    const ss = surfaceStates.get(sessionKey);
+    const snapshot = ss ? ss.snapshot(surfaceId) : null;
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify(snapshot || { components: [], data: {} }));
+    return;
+  }
+
+  // 3c. Messages API
+  if (pathname === "/api/messages" && req.method === "GET") {
+    setSecurityHeaders(res);
+    const sessionKey = reqUrl.searchParams.get("session") || "default";
+    const limit = parseInt(reqUrl.searchParams.get("limit") || "20", 10);
+    const msgs = msgStore.getRecent(sessionKey, limit);
+    
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify(msgs));
+    return;
+  }
+
+  // 3d. Standard Notes API
+  if (pathname.startsWith("/api/standard-notes/")) {
+    setSecurityHeaders(res);
+    const action = pathname.replace("/api/standard-notes/", "");
+    
+    // Handle CORS preflight
+    if (req.method === "OPTIONS") {
+      res.writeHead(204, {
+        "Access-Control-Allow-Origin": req.headers.origin || "*",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, X-Session-ID",
+        "Access-Control-Allow-Credentials": "true",
+        "Access-Control-Max-Age": "86400"
+      });
+      res.end();
+      return;
+    }
+    
+    let body = "";
+    req.on("data", chunk => { body += chunk; });
+    req.on("end", async () => {
+      try {
+        const data = body ? JSON.parse(body) : {};
+        const sessionId = req.headers["x-session-id"];
+        let result;
+        
+        switch (action) {
+          case "auth":
+            if (req.method !== "POST") {
+              res.writeHead(405, { "Content-Type": "application/json" });
+              res.end(JSON.stringify({ error: "Method not allowed" }));
+              return;
+            }
+            result = await standardNotesAPI.authenticate(data.email, data.password, data.server);
+            break;
+            
+          case "notes":
+            if (!sessionId) {
+              res.writeHead(401, { "Content-Type": "application/json" });
+              res.end(JSON.stringify({ error: "Session ID required" }));
+              return;
+            }
+            
+            if (req.method === "GET") {
+              const search = reqUrl.searchParams.get("search");
+              const tag = reqUrl.searchParams.get("tag");
+              const limit = reqUrl.searchParams.get("limit");
+              result = await standardNotesAPI.listNotes(sessionId, { search, tag, limit });
+            } else if (req.method === "POST") {
+              result = await standardNotesAPI.createNote(sessionId, data.title, data.content, data.tags);
+            } else {
+              res.writeHead(405, { "Content-Type": "application/json" });
+              res.end(JSON.stringify({ error: "Method not allowed" }));
+              return;
+            }
+            break;
+            
+          case "note":
+            if (!sessionId) {
+              res.writeHead(401, { "Content-Type": "application/json" });
+              res.end(JSON.stringify({ error: "Session ID required" }));
+              return;
+            }
+            
+            const noteId = reqUrl.searchParams.get("id");
+            if (!noteId) {
+              res.writeHead(400, { "Content-Type": "application/json" });
+              res.end(JSON.stringify({ error: "Note ID required" }));
+              return;
+            }
+            
+            if (req.method === "GET") {
+              result = await standardNotesAPI.getNote(sessionId, noteId);
+            } else if (req.method === "PUT") {
+              result = await standardNotesAPI.updateNote(sessionId, noteId, data);
+            } else if (req.method === "DELETE") {
+              result = await standardNotesAPI.deleteNote(sessionId, noteId);
+            } else {
+              res.writeHead(405, { "Content-Type": "application/json" });
+              res.end(JSON.stringify({ error: "Method not allowed" }));
+              return;
+            }
+            break;
+            
+          case "search":
+            if (!sessionId || req.method !== "GET") {
+              res.writeHead(sessionId ? 405 : 401, { "Content-Type": "application/json" });
+              res.end(JSON.stringify({ error: sessionId ? "Method not allowed" : "Session ID required" }));
+              return;
+            }
+            
+            const query = reqUrl.searchParams.get("q");
+            if (!query) {
+              res.writeHead(400, { "Content-Type": "application/json" });
+              res.end(JSON.stringify({ error: "Search query required" }));
+              return;
+            }
+            
+            result = await standardNotesAPI.searchNotes(sessionId, query);
+            break;
+            
+          case "logout":
+            if (!sessionId || req.method !== "POST") {
+              res.writeHead(sessionId ? 405 : 401, { "Content-Type": "application/json" });
+              res.end(JSON.stringify({ error: sessionId ? "Method not allowed" : "Session ID required" }));
+              return;
+            }
+            
+            result = await standardNotesAPI.logout(sessionId);
+            break;
+            
+          case "status":
+            if (req.method !== "GET") {
+              res.writeHead(405, { "Content-Type": "application/json" });
+              res.end(JSON.stringify({ error: "Method not allowed" }));
+              return;
+            }
+            
+            result = standardNotesAPI.getStatus();
+            result.success = true;
+            break;
+            
+          default:
+            res.writeHead(404, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ error: "API endpoint not found" }));
+            return;
+        }
+        
+        const statusCode = result.success ? 200 : 400;
+        res.writeHead(statusCode, { 
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": req.headers.origin || "*",
+          "Access-Control-Allow-Credentials": "true"
+        });
+        res.end(JSON.stringify(result));
+        
+      } catch (error) {
+        console.error("[StandardNotes API] Error:", error);
+        res.writeHead(500, { 
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": req.headers.origin || "*",
+          "Access-Control-Allow-Credentials": "true"
+        });
+        res.end(JSON.stringify({ 
+          success: false, 
+          error: error.message || "Internal server error" 
+        }));
+      }
+    });
+    return;
+  }
+
+  // 4. Static Files
+  let filePath = path.join(WEB_DIR, pathname === "/" ? "index.html" : pathname);
+  
+  // Prevent traversal
+  if (!filePath.startsWith(WEB_DIR)) {
+    res.writeHead(403);
+    res.end("Forbidden");
+    return;
+  }
+
+  if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+    const ext = path.extname(filePath);
+    const mime = {
+      ".html": "text/html",
+      ".js": "application/javascript",
+      ".css": "text/css",
+      ".json": "application/json",
+      ".png": "image/png",
+      ".jpg": "image/jpeg",
+      ".svg": "image/svg+xml"
+    }[ext] || "application/octet-stream";
+    
+    res.writeHead(200, { 
+      "Content-Type": mime,
+      "Cache-Control": "no-cache, no-store, must-revalidate"
+    });
+    fs.createReadStream(filePath).pipe(res);
+  } else {
+    res.writeHead(404);
+    res.end("Not found");
+  }
+});
+
+// ── WebSocket Proxy ──
+const wss = new WebSocket.Server({ server });
+const wsClients = new Set();
+
+function broadcast(data, excludeWs) {
+  for (const client of wsClients) {
+    if (client !== excludeWs && client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify(data));
+    }
+  }
+}
+
+wss.on("connection", (ws, req) => {
+  wsClients.add(ws);
+
+  console.log("[Canvas WS] New connection from", req.socket.remoteAddress, "url:", req.url);
+  console.log("[Canvas WS] Cookies:", req.headers.cookie ? req.headers.cookie.slice(0, 80) : "(none)");
+  
+  // Check auth from cookie or query
+  const cookieToken = getCookie(req, "scratchy_canvas_auth") || getCookie(req, "scratchy_auth");
+  const urlParams = new URL(req.url, `http://localhost:${PORT}`).searchParams;
+  const queryToken = urlParams.get("token");
+
+  // Validate token
+  let token = null;
+  if (cookieToken && timingSafeEqual(cookieToken, AUTH_TOKEN)) token = cookieToken;
+  if (queryToken && timingSafeEqual(queryToken, AUTH_TOKEN)) token = queryToken;
+
+  console.log("[Canvas WS] Auth:", token ? "OK" : "FAILED", "(cookie:", !!cookieToken, "query:", !!queryToken, ")");
+
+  if (!token) {
+    ws.close(1008, "Unauthorized");
+    return;
+  }
+
+  // Connect to Gateway
+  // Gateway WS proxy with challenge-response handshake
+  const gatewayWs = new WebSocket(`ws://127.0.0.1:${GATEWAY_PORT}`, {
+    headers: { Origin: "https://scratchyui.clawos.fr" }
+  });
+  let gatewayHandshakeDone = false;
+  let challengeReceived = false;
+  const clientMsgBuffer = []; // Buffer client msgs until gateway handshake done
+  
+  // Track session key for this connection (default to agent:main:main)
+  let currentSessionKey = "agent:main:main";
+
+  gatewayWs.on("open", () => {
+    console.log("[Canvas WS] Gateway WS opened, waiting for challenge...");
+  });
+
+  gatewayWs.on("message", (data) => {
+    const str = typeof data === 'string' ? data : data.toString();
+    
+    try {
+      const frame = JSON.parse(str);
+
+      // Step 1: Gateway sends connect.challenge — respond with our auth
+      if (!challengeReceived && frame.type === "event" && frame.event === "connect.challenge") {
+        challengeReceived = true;
+        console.log("[Canvas WS] Got challenge, sending server-side handshake...");
+        const connectFrame = {
+          type: "req",
+          id: "canvas-connect-1",
+          method: "connect",
+          params: {
+            minProtocol: 3,
+            maxProtocol: 3,
+            client: { id: "webchat", displayName: "Scratchy-Canvas", version: "1.0.0", platform: "web", mode: "webchat" },
+            auth: { token: AUTH_TOKEN },
+          },
+        };
+        gatewayWs.send(JSON.stringify(connectFrame));
+        return; // Don't forward challenge to client
+      }
+
+      // Step 2: Gateway responds to our connect — handshake done
+      if (!gatewayHandshakeDone && frame.type === "res" && frame.id === "canvas-connect-1") {
+        if (!frame.ok) {
+          console.error("[Canvas WS] Gateway handshake failed:", JSON.stringify(frame.error));
+          ws.close(1008, "Gateway handshake failed");
+          return;
+        }
+        gatewayHandshakeDone = true;
+        console.log("[Canvas WS] Gateway handshake complete — proxying");
+        
+        // Send history to client
+        ws.send(JSON.stringify({ 
+          type: "event", 
+          event: "history", 
+          payload: { messages: msgStore.getRecent(currentSessionKey, 20) } 
+        }));
+        
+        // Drain buffered client messages
+        while (clientMsgBuffer.length > 0) {
+          gatewayWs.send(clientMsgBuffer.shift());
+        }
+        return;
+      }
+      
+      // ── AG-UI: Track agent activity → lifecycle events ──
+      if (frame.type === "event" && frame.event === "activity" && frame.payload) {
+        runTracker.processGatewayActivity(frame.payload, currentSessionKey || 'default');
+      }
+      // ── AG-UI: Track chat deltas → text streaming events ──
+      if (frame.type === "event" && frame.event === "chat" && frame.payload && frame.payload.state === "delta") {
+        runTracker.processGatewayChatEvent(frame.payload, currentSessionKey || 'default');
+      }
+
+      // Capture Assistant Message
+      if (frame.type === "event" && frame.event === "chat" && frame.payload && frame.payload.state === "final") {
+        // AG-UI: finalize run
+        runTracker.processGatewayChatEvent(frame.payload, currentSessionKey || 'default');
+         const text = extractAssistantText(frame);
+
+         // Parse A2UI envelopes from assistant text
+         const a2uiParser = new A2UIParser();
+         const { envelopes: a2uiEnvelopes, cleanText } = a2uiParser.parse(text);
+         
+         // Broadcast A2UI envelopes if any were found
+         if (a2uiEnvelopes.length > 0) {
+           broadcast({
+             type: "a2ui",
+             envelopes: a2uiEnvelopes
+           }, ws);
+         }
+
+         const msg = msgStore.add(currentSessionKey, {
+             role: "assistant",
+             text: cleanText, // Store clean text without a2ui blocks
+             timestamp: Date.now()
+         });
+         
+         broadcast({
+             type: "event",
+             event: "new-message",
+             payload: msg
+         }, ws);
+
+         // Update server-side canvas state from scratchy-canvas ops
+         if (cleanText && currentSessionKey) {
+           const ops = parseCanvasOps(cleanText);
+           if (ops.length > 0) {
+             const sk = currentSessionKey;
+             if (!canvasStates.has(sk)) {
+               canvasStates.set(sk, { components: {}, layout: "auto", version: 0, sessionKey: sk });
+             }
+             const st = canvasStates.get(sk);
+             for (const op of ops) {
+               switch (op.op) {
+                 case "clear":
+                   st.components = {};
+                   break;
+                 case "upsert":
+                   if (op.id && op.type) {
+                     st.components[op.id] = { id: op.id, type: op.type, data: op.data || {}, layout: op.layout || { zone: "auto", order: 0 } };
+                   }
+                   break;
+                 case "patch":
+                   if (op.id && st.components[op.id] && op.data) {
+                     Object.assign(st.components[op.id].data, op.data);
+                   }
+                   break;
+                 case "remove":
+                   if (op.id) delete st.components[op.id];
+                   break;
+                 case "layout":
+                   if (op.mode) st.layout = op.mode;
+                   break;
+                 case "move":
+                   if (op.id && st.components[op.id] && op.layout) {
+                     Object.assign(st.components[op.id].layout, op.layout);
+                   }
+                   break;
+               }
+             }
+             st.version++;
+             // Translate v1 ops → v2 envelopes
+             const envelopes = v1Compat.translate(ops, sk);
+             // Update v2 surface state
+             const ss = getSurfaceState(sk);
+             for (const env of envelopes) {
+               if (env.payload.surfaceUpdate) ss.updateComponents(env.payload.surfaceUpdate.surfaceId || 'main', []);
+               if (env.payload.dataModelUpdate) {
+                 const dmu = env.payload.dataModelUpdate;
+                 ss.updateData(dmu.surfaceId || 'main', dmu.path, dmu.contents);
+               }
+             }
+             // Broadcast ops + envelopes to ALL canvas clients (including originator)
+             broadcast({ type: "event", event: "canvas-update", payload: { ops, envelopes, state: st } });
+           }
+         }
+      }
+      
+    } catch {
+      // Not JSON — pass through
+    }
+
+    // Forward gateway messages to client (after handshake)
+    if (gatewayHandshakeDone && ws.readyState === WebSocket.OPEN) {
+      ws.send(str);
+    }
+  });
+
+  // Client → Gateway: intercept client's connect frame and handle it ourselves
+  const clientId = crypto.randomUUID();
+  ws.on("close", () => { wsClients.delete(ws); wsRateLimiter.reset(clientId); });
+  ws.on("message", (data) => {
+    const str = typeof data === 'string' ? data : data.toString();
+    
+    // Rate limit check
+    const rlResult = wsRateLimiter.check(clientId);
+    if (!rlResult.allowed) {
+      ws.send(JSON.stringify({
+        type: "error",
+        payload: { code: "RATE_LIMITED", message: "Too many messages", retryAfterMs: rlResult.retryAfterMs }
+      }));
+      return;
+    }
+    wsRateLimiter.consume(clientId);
+
+    try {
+      const frame = JSON.parse(str);
+      
+      // Client sends its own connect handshake — respond directly (we already authed with gateway)
+      if (frame.method === "connect") {
+        // Capture session
+        if (frame.params && frame.params.session) {
+          currentSessionKey = frame.params.session;
+        }
+
+        console.log("[Canvas WS] Client connect request — responding with synthetic hello-ok");
+        const response = {
+          type: "res",
+          id: frame.id,
+          ok: true,
+          payload: {
+            type: "hello-ok",
+            protocol: 3,
+            server: { version: "canvas-proxy", host: "scratchy-canvas" },
+          },
+        };
+        ws.send(JSON.stringify(response));
+        return;
+      }
+
+      // Handle catalog request
+      if (frame.type === "catalog-request") {
+        console.log("[Canvas WS] Client catalog request");
+        try {
+          const catalogPath = "/home/nonbios/scratchy/web/catalog/v2.json";
+          const catalogContent = fs.readFileSync(catalogPath, 'utf-8');
+          const catalog = JSON.parse(catalogContent);
+          
+          const response = {
+            type: "catalog-response",
+            payload: catalog
+          };
+          ws.send(JSON.stringify(response));
+        } catch (e) {
+          console.error("[Canvas WS] Failed to load catalog:", e.message);
+          const errorResponse = {
+            type: "catalog-response",
+            error: "Failed to load catalog"
+          };
+          ws.send(JSON.stringify(errorResponse));
+        }
+        return;
+      }
+      
+      // Capture User Message
+      if (frame.method === "chat.send") {
+        msgStore.add(currentSessionKey, {
+           role: "user",
+           text: frame.params.message,
+           timestamp: Date.now()
+        });
+      }
+      
+    } catch {
+      // Not JSON — pass through
+    }
+
+    // Forward all other client messages to gateway
+    if (gatewayHandshakeDone) {
+      gatewayWs.send(str);
+    } else {
+      clientMsgBuffer.push(str);
+    }
+  });
+
+  gatewayWs.on("error", (e) => { console.error("[Canvas WS] Gateway error:", e.message); ws.close(); });
+  gatewayWs.on("close", () => ws.close());
+  ws.on("error", () => gatewayWs.close());
+  ws.on("close", () => gatewayWs.close());
+});
+
+// ── Start ──
+// Periodically clean up stale rate limiter entries
+setInterval(() => wsRateLimiter.cleanup(300000), 60000);
+
+// Initialize Standard Notes API session cleanup
+standardNotesAPI.startSessionCleanup();
+
+server.listen(PORT, () => {
+  console.log(`🎨 Scratchy Canvas Server running on port ${PORT}`);
+  console.log(`   Gateway: port ${GATEWAY_PORT}`);
+  console.log(`   Auth: enabled`);
+  console.log(`   Standard Notes API: ready`);
+});

@@ -1,0 +1,30 @@
+{
+  "name": "scratchy",
+  "version": "1.0.0",
+  "description": "**A generative UI client for OpenClaw agents.**",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yassinebkr/scratchy.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/yassinebkr/scratchy/issues"
+  },
+  "homepage": "https://github.com/yassinebkr/scratchy#readme",
+  "dependencies": {
+    "@simplewebauthn/server": "^13.2.3",
+    "@tauri-apps/cli": "^2.10.0",
+    "@tauri-apps/cli-win32-x64-msvc": "^2.10.0",
+    "@toon-format/toon": "^2.1.0",
+    "argon2": "^0.44.0",
+    "googleapis": "^171.4.0",
+    "ws": "^8.19.0"
+  }
+}

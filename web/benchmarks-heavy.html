@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Heavy Benchmarks: Gemini vs Opus</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html{font-size:16px;-webkit-text-size-adjust:100%}
+body{background:#0f1117;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;padding:16px;max-width:1200px;margin:0 auto;font-size:1rem;line-height:1.5}
+h1{font-size:1.5em;margin-bottom:4px}
+.sub{color:#94a3b8;font-size:.85em;margin-bottom:16px}
+.back-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;background:#1e2030;color:#94a3b8;text-decoration:none;font-size:.85em;border:1px solid #2a2d3e;transition:.2s;margin-bottom:16px}
+.back-btn:hover{background:#252838;color:#fff}
+.nav{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.nav a{padding:8px 16px;border-radius:8px;text-decoration:none;font-size:.85em;background:#1e2030;color:#94a3b8;border:1px solid #2a2d3e;transition:.2s}
+.nav a:hover{background:#252838}
+.nav a.active{background:#2a2d3e;color:#fff;border-color:#8b5cf6}
+.tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.tab{padding:8px 16px;border-radius:8px;cursor:pointer;background:#1e2030;border:1px solid #2a2d3e;font-size:.85em;color:#94a3b8;transition:.2s}
+.tab.active{background:#2a2d3e;color:#fff;border-color:#8b5cf6}
+.tab:hover{background:#252838}
+.section{display:none}.section.active{display:block}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:800px){.grid{grid-template-columns:1fr}}
+.panel{background:#1a1d2e;border-radius:12px;padding:16px;border:1px solid #2a2d3e}
+.panel.gemini{border-top:3px solid #4285f4}
+.panel.opus{border-top:3px solid #8b5cf6}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.75em;font-weight:600;margin-bottom:10px}
+.badge.gemini{background:#4285f420;color:#4285f4}
+.badge.opus{background:#8b5cf620;color:#8b5cf6}
+.meta{color:#64748b;font-size:.78em;margin-bottom:12px}
+
+.task-desc{background:#151825;border:1px solid #2a2d3e;border-radius:8px;padding:14px;margin-bottom:16px}
+.task-desc h3{font-size:.9em;color:#fff;margin-bottom:6px}
+.task-desc p{font-size:.82em;color:#94a3b8;line-height:1.5}
+.task-desc .prompt{font-family:monospace;background:#0d1017;padding:10px;border-radius:6px;font-size:.78em;color:#cbd5e1;margin-top:8px;white-space:pre-wrap;border:1px solid #2a2d3e}
+
+.alert-box{padding:10px 14px;border-radius:8px;font-size:.82em;margin-bottom:10px;line-height:1.5}
+.alert-box.info{background:#3b82f615;color:#3b82f6;border:1px solid #3b82f630}
+.alert-box.err{background:#ef444415;color:#ef4444;border:1px solid #ef444430}
+.alert-box.warn{background:#f59e0b15;color:#f59e0b;border:1px solid #f59e0b30}
+.alert-box.ok{background:#10b98115;color:#10b981;border:1px solid #10b98130}
+
+.code-block{background:#0d1017;border:1px solid #2a2d3e;border-radius:8px;padding:12px;font-family:monospace;font-size:.78em;line-height:1.4;color:#a5b4c4;overflow-x:auto;margin-bottom:10px;white-space:pre}
+
+h3.proof-title{font-size:.88em;color:#fff;margin:10px 0 8px}
+.proof-step{background:#151825;padding:10px;border-radius:8px;margin-bottom:6px;font-size:.82em;line-height:1.5}
+.proof-step .step-num{color:#4285f4;font-weight:700}
+.proof-step.opus .step-num{color:#8b5cf6}
+
+.tag{display:inline-block;padding:3px 10px;border-radius:12px;font-size:.72em;font-weight:600;margin:2px}
+
+.summary{margin-top:24px;background:#1a1d2e;border-radius:12px;padding:16px;border:1px solid #2a2d3e}
+.summary h2{font-size:1em;margin-bottom:10px}
+.summary table{width:100%;border-collapse:collapse;font-size:.82em}
+.summary th{text-align:left;padding:6px 8px;border-bottom:2px solid #2a2d3e;color:#94a3b8}
+.summary td{padding:6px 8px;border-bottom:1px solid #1e2030}
+.summary td:nth-child(2){color:#4285f4}
+.summary td:nth-child(3){color:#8b5cf6}
+
+.verdict{margin-top:16px;background:#1a1d2e;border-radius:12px;padding:16px;border:1px solid #8b5cf630;border-left:4px solid #8b5cf6}
+.verdict h3{font-size:.9em;margin-bottom:6px;color:#8b5cf6}
+.verdict p{font-size:.82em;line-height:1.6;color:#cbd5e1}
+</style>
+</head>
+<body>
+
+<a href="/" class="back-btn">&#x2190; Back to Chat</a>
+
+<h1>&#x1f9ea; Heavy Reasoning Benchmarks</h1>
+<div class="sub">Gemini 3 Pro (HIGH thinking) vs Claude Opus 4.6 &mdash; February 17, 2026</div>
+
+<div class="nav">
+<a href="benchmarks.html">&#x1f3a8; Light Tasks</a>
+<a href="benchmarks-heavy.html" class="active">&#x1f9e0; Heavy Reasoning</a>
+</div>
+
+<div class="tabs">
+<div class="tab active" onclick="showTab('math')">&#x1f4d0; Math Proof</div>
+<div class="tab" onclick="showTab('physics')">&#x1f321; Physics Sim</div>
+</div>
+
+<!-- ============ MATH TAB ============ -->
+<div id="tab-math" class="section active">
+
+<div class="task-desc">
+<h3>&#x1f3af; The Task</h3>
+<p>Write a rigorous mathematical proof that &radic;2 + &radic;3 is irrational. The proof must include: preliminary lemmas with proofs, the main argument with every algebraic step justified, an alternative proof method, and a generalization to broader classes of numbers. Output as a LaTeX-style markdown document.</p>
+<div class="prompt">Prompt: "Write a rigorous algebraic proof that sqrt(2) + sqrt(3) is irrational. Include: (1) all necessary lemmas with proofs, (2) step-by-step main proof with every manipulation justified, (3) an alternative proof approach, (4) generalization to sqrt(p) + sqrt(q) for distinct primes. Write to a .md file."</div>
+</div>
+
+<div class="grid">
+<div class="panel gemini">
+<span class="badge gemini">Gemini 3 Pro (HIGH thinking)</span>
+<div class="meta">60s &bull; 4.5K output tokens &bull; 4.8KB file</div>
+
+<h3 class="proof-title">Approach: Minimal Polynomial + Rational Root Theorem</h3>
+<p style="font-size:.82em;color:#94a3b8;margin-bottom:10px">Single clean method &mdash; constructs the minimal polynomial and proves irreducibility.</p>
+
+<div class="proof-step">
+<span class="step-num">Step 1 &mdash; Setup:</span> Let x = &radic;2 + &radic;3. Square both sides: x&sup2; = 5 + 2&radic;6
+</div>
+<div class="proof-step">
+<span class="step-num">Step 2 &mdash; Isolate radical:</span> x&sup2; &minus; 5 = 2&radic;6. Square again: (x&sup2; &minus; 5)&sup2; = 24, giving x&sup4; &minus; 10x&sup2; + 1 = 0
+</div>
+<div class="proof-step">
+<span class="step-num">Step 3 &mdash; Rational Root Theorem:</span> Possible rational roots of x&sup4; &minus; 10x&sup2; + 1 are &plusmn;1. Check: f(1) = 1 &minus; 10 + 1 = &minus;8 &ne; 0, f(&minus;1) = &minus;8 &ne; 0. No rational roots.
+</div>
+<div class="proof-step">
+<span class="step-num">Step 4 &mdash; Quadratic factorization:</span> Check if polynomial splits into two quadratics over &Qopf;. Discriminant analysis shows no valid factorization exists.
+</div>
+<div class="proof-step">
+<span class="step-num">Step 5 &mdash; Conclusion:</span> The minimal polynomial is irreducible over &Qopf;, so &radic;2 + &radic;3 has degree 4 over &Qopf; &rArr; it is irrational. &#x220e;
+</div>
+
+<div class="alert-box ok"><b>Generalization:</b> Extends to &radic;p + &radic;q for distinct primes p, q via the same minimal polynomial construction and field extension argument.</div>
+
+<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px">
+<span class="tag" style="background:#4285f420;color:#4285f4">Concise (4.8KB)</span>
+<span class="tag" style="background:#4285f420;color:#4285f4">Single method</span>
+<span class="tag" style="background:#4285f420;color:#4285f4">Clean LaTeX</span>
+<span class="tag" style="background:#4285f420;color:#4285f4">Efficient</span>
+</div>
+</div>
+
+<div class="panel opus">
+<span class="badge opus">Claude Opus 4.6</span>
+<div class="meta">66s &bull; 3.9K output tokens &bull; 8.0KB file</div>
+
+<h3 class="proof-title">Approach: Dual Proof (Contradiction + Minimal Polynomial)</h3>
+<p style="font-size:.82em;color:#94a3b8;margin-bottom:10px">Two independent proof methods, five supporting lemmas, broadest possible generalization.</p>
+
+<div class="proof-step opus">
+<span class="step-num">Lemmas 1&ndash;5:</span> Full self-contained proofs of: (1) &radic;2 irrational, (2) &radic;3 irrational, (3) &radic;6 irrational, (4) &Qopf; closed under arithmetic, (5) Rational Root Theorem. Each builds on the previous.
+</div>
+<div class="proof-step opus">
+<span class="step-num">Main Proof (Contradiction):</span> Assume &radic;2 + &radic;3 = &alpha; &isin; &Qopf;. Then &radic;3 &minus; &radic;2 = 1/&alpha; &isin; &Qopf;. Add: 2&radic;3 = &alpha; + 1/&alpha; &isin; &Qopf;, so &radic;3 &isin; &Qopf;. Contradiction with Lemma 2. Alternatively: &radic;6 = (&alpha;&sup2; &minus; 5)/2 &isin; &Qopf;, contradicting Lemma 3.
+</div>
+<div class="proof-step opus">
+<span class="step-num">Alt Proof (Minimal Polynomial):</span> Same x&sup4; &minus; 10x&sup2; + 1 = 0 construction. But then exhaustive irreducibility: no rational roots checked + complete quadratic factorization analysis (tested a=0 case, c=b case, all sub-cases with signed square roots).
+</div>
+<div class="proof-step opus">
+<span class="step-num">Generalization:</span> Two levels: (1) &radic;p + &radic;q irrational for distinct primes. (2) Broadest: &radic;a + &radic;b &isin; &Qopf; &hArr; both a, b are perfect squares. Includes rationalizing conjugate technique.
+</div>
+<div class="proof-step opus">
+<span class="step-num">Bonus:</span> Dependency diagram showing logical structure. Sufficient condition via conjugate: if &radic;m + &radic;n &isin; &Qopf; then &radic;m &minus; &radic;n = (m&minus;n)/(&radic;m+&radic;n) &isin; &Qopf;, implying both &radic;m, &radic;n &isin; &Qopf;.
+</div>
+
+<div class="alert-box ok"><b>Generalization:</b> Broadest possible &mdash; &radic;a + &radic;b &isin; &Qopf; if and only if both a and b are perfect squares. Necessary AND sufficient condition.</div>
+
+<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px">
+<span class="tag" style="background:#8b5cf620;color:#8b5cf6">Textbook quality</span>
+<span class="tag" style="background:#8b5cf620;color:#8b5cf6">Dual proofs</span>
+<span class="tag" style="background:#8b5cf620;color:#8b5cf6">5 lemmas</span>
+<span class="tag" style="background:#8b5cf620;color:#8b5cf6">Broadest generalization</span>
+<span class="tag" style="background:#8b5cf620;color:#8b5cf6">Dependency diagram</span>
+<span class="tag" style="background:#8b5cf620;color:#8b5cf6">8.0KB</span>
+</div>
+</div>
+</div>
+</div>
+
+<!-- ============ PHYSICS TAB ============ -->
+<div id="tab-physics" class="section">
+
+<div class="task-desc">
+<h3>&#x1f3af; The Task</h3>
+<p>Write a complete 2D steady-state heat dissipation simulation for a copper heatsink with 5 fins using the Finite Difference Method (FDM). The simulation must handle complex geometry (base plate + rectangular fins), apply Robin boundary conditions (convection) on exposed surfaces and Dirichlet conditions at the heat source, solve the Laplace equation iteratively, and produce a temperature contour plot with heat dissipation metrics.</p>
+<div class="prompt">Prompt: "Write a Python script simulating 2D steady-state heat dissipation for a copper heatsink. Geometry: 100mm base, 5 evenly-spaced 2mm x 30mm fins. BCs: 80C base (Dirichlet), h=25 W/m2K convection on exposed surfaces (Robin), T_amb=25C. Solve nabla^2 T = 0 with FDM. Output: contour plot PNG + max/min temp + total heat dissipated. Libraries: numpy + matplotlib only."</div>
+</div>
+
+<div class="grid">
+<div class="panel gemini">
+<span class="badge gemini">Gemini 3 Pro (HIGH thinking)</span>
+<div class="meta">115s &bull; 7.4K output tokens &bull; 271 lines &bull; 10KB</div>
+
+<h3 class="proof-title">Approach: Fully Vectorized Jacobi + Boolean Masks</h3>
+<p style="font-size:.82em;color:#94a3b8;margin-bottom:10px">No nested Python loops. Uses numpy boolean masks and vectorized stencil operations for the entire solve.</p>
+
+<div class="code-block"># Core solver (simplified)
+# Pre-compute geometry as boolean mask
+solid_mask = np.zeros((ny, nx), dtype=bool)
+# ... fill base and fin regions ...
+
+# Jacobi iteration — fully vectorized
+for _ in range(max_iter):
+    T_new[1:-1,1:-1] = 0.25 * (
+        T[:-2,1:-1] + T[2:,1:-1] +
+        T[1:-1,:-2] + T[1:-1,2:]
+    )
+    # Apply only where copper exists
+    T = np.where(solid_mask, T_new, T)
+    # Convection BCs on boundary nodes
+    for i, j in conv_nodes:
+        T[i,j] = (T_interior + Bi*T_amb)/(1+Bi)</div>
+
+<div class="alert-box ok">&#x2705; <b>Runs successfully!</b> Converged in 8,000 iterations, <b>1.2 seconds</b> runtime.<br>Results: Max 80.0&deg;C (base), Min 77.9&deg;C (fin tips), Heat dissipated: 703.2 W/m</div>
+
+<div style="margin:10px 0"><img src="heatsink_gemini.png" style="width:100%;border-radius:8px;border:1px solid #2a2d3e" alt="Gemini heatsink temperature contour plot"></div>
+
+<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px">
+<span class="tag" style="background:#4285f420;color:#4285f4">Fully vectorized</span>
+<span class="tag" style="background:#4285f420;color:#4285f4">1.2s runtime</span>
+<span class="tag" style="background:#4285f420;color:#4285f4">Compact (271 lines)</span>
+<span class="tag" style="background:#10b98120;color:#10b981">&#x2705; Working code</span>
+</div>
+</div>
+
+<div class="panel opus">
+<span class="badge opus">Claude Opus 4.6</span>
+<div class="meta">118s &bull; 6.4K output tokens &bull; 445 lines &bull; 17.6KB</div>
+
+<h3 class="proof-title">Approach: Typed Cell Classification + SOR Solver</h3>
+<p style="font-size:.82em;color:#94a3b8;margin-bottom:10px">Object-oriented design with IntEnum cell types. Uses Successive Over-Relaxation (SOR, &omega;=1.6) which converges faster than Jacobi &mdash; but implemented with nested Python loops instead of vectorized numpy.</p>
+
+<div class="code-block"># Core architecture (simplified)
+class CellType(IntEnum):
+    AIR = 0; SOLID = 1; CONV_TOP = 2
+    CONV_LEFT = 3; CONV_RIGHT = 4
+
+# SOR iteration — nested loops (not vectorized)
+for iteration in range(max_iter):
+    for i in range(ny):
+        for j in range(nx):
+            if cell[i,j] == CellType.SOLID:
+                # Standard 5-point Laplace stencil
+                T_gs = 0.25*(T[i-1,j]+T[i+1,j]
+                             +T[i,j-1]+T[i,j+1])
+            elif cell[i,j] >= CellType.CONV_TOP:
+                # Robin BC via ghost-node elimination
+                T_gs = (T_int + Bi*T_amb)/(1+Bi)
+            # SOR relaxation
+            T[i,j] += omega * (T_gs - T[i,j])</div>
+
+<div class="alert-box err">&#x274c; <b>Did not complete:</b> Process received SIGKILL during execution. The 201&times;81 mesh with nested Python loops (no vectorization) caused the VM to exhaust memory/time limits. SOR converges in fewer iterations than Jacobi, but each iteration is ~100x slower in pure Python vs numpy vectorization.</div>
+
+<div class="alert-box info">&#x1f4a1; <b>Architecture notes:</b> Superior design &mdash; typed cell classification, SOR solver (theoretically faster convergence), energy balance cross-check, modular structure. Would work perfectly if the inner loops were vectorized with numpy, or if running on a machine with more resources.</div>
+
+<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px">
+<span class="tag" style="background:#8b5cf620;color:#8b5cf6">Modular design</span>
+<span class="tag" style="background:#8b5cf620;color:#8b5cf6">Typed cells (IntEnum)</span>
+<span class="tag" style="background:#8b5cf620;color:#8b5cf6">SOR (&omega;=1.6)</span>
+<span class="tag" style="background:#8b5cf620;color:#8b5cf6">Energy balance check</span>
+<span class="tag" style="background:#8b5cf620;color:#8b5cf6">445 lines / 17.6KB</span>
+<span class="tag" style="background:#ef444420;color:#ef4444">&#x274c; Did not run</span>
+</div>
+</div>
+</div>
+</div>
+
+<!-- ============ SUMMARY ============ -->
+<div class="summary">
+<h2>&#x1f4ca; Summary</h2>
+<table>
+<tr><th>Metric</th><th>Gemini 3 Pro (HIGH)</th><th>Opus 4.6</th></tr>
+<tr><td>Math &mdash; Time</td><td>60s</td><td>66s</td></tr>
+<tr><td>Math &mdash; Output</td><td>4.8KB (concise)</td><td>8.0KB (comprehensive)</td></tr>
+<tr><td>Math &mdash; Method</td><td>Single (minimal poly + RRT)</td><td>Dual (contradiction + minimal poly)</td></tr>
+<tr><td>Math &mdash; Generalization</td><td>&radic;p + &radic;q for distinct primes</td><td>&radic;a + &radic;b &hArr; perfect squares</td></tr>
+<tr><td>Math &mdash; Supporting work</td><td>Inline justifications</td><td>5 standalone lemmas with proofs</td></tr>
+<tr><td>Physics &mdash; Time</td><td>115s</td><td>118s</td></tr>
+<tr><td>Physics &mdash; Output</td><td>10KB / 271 lines</td><td>17.6KB / 445 lines</td></tr>
+<tr><td>Physics &mdash; Solver</td><td>Jacobi (vectorized numpy)</td><td>SOR &omega;=1.6 (nested loops)</td></tr>
+<tr><td>Physics &mdash; Runs?</td><td style="color:#10b981">&#x2705; Yes (1.2s)</td><td style="color:#ef4444">&#x274c; No (SIGKILL)</td></tr>
+<tr><td>Physics &mdash; Architecture</td><td>Compact, practical</td><td>Modular, typed, thorough</td></tr>
+<tr><td>Cost</td><td>$0 (OAuth sub)</td><td>$0 (Max sub)</td></tr>
+</table>
+</div>
+
+<div class="verdict">
+<h3>&#x1f4a1; Key Takeaway</h3>
+<p><b>Math:</b> Both models match in speed (~60s). Gemini is concise and efficient &mdash; one clean proof, done. Opus is a textbook author &mdash; dual proofs, five lemmas, the broadest possible generalization, a dependency diagram. If you want a quick answer, Gemini. If you're writing lecture notes, Opus.</p>
+<p style="margin-top:8px"><b>Physics:</b> This is where the practical difference shows. Gemini's vectorized approach actually runs (1.2s!). Opus wrote the better architecture (typed cells, SOR, energy balance) but forgot the constraint: nested Python loops over a 16,000-node mesh = instant death on a 4-core VM. Good design that doesn't execute is worse than simple design that does. <b>Gemini wins this round on practicality.</b></p>
+</div>
+
+<script>
+function showTab(id) {
+  document.querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); });
+  document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+  document.getElementById('tab-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>

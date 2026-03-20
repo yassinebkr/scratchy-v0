@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Scratchy — Trial Expired</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0a0a0a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Scratchy">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #0a0a0a;
+      --card-bg: rgba(255,255,255,0.03);
+      --card-border: rgba(255,255,255,0.06);
+      --accent: #7c3aed;
+      --accent-hover: #8b5cf6;
+      --accent-glow: rgba(124,58,237,0.25);
+      --text-primary: #e4e4e7;
+      --text-secondary: #71717a;
+      --text-muted: #52525b;
+      --radius-input: 12px;
+      --radius-card: 16px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      min-height: 100dvh;
+      padding: 20px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(16px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-card);
+      padding: 48px 40px;
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+      animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.02) inset;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0.5;
+    }
+
+    .icon {
+      font-size: 3.5rem;
+      margin-bottom: 8px;
+      display: block;
+      line-height: 1.2;
+    }
+
+    .title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      margin-bottom: 24px;
+      line-height: 1.4;
+    }
+
+    .message {
+      color: var(--text-muted);
+      font-size: 0.825rem;
+      line-height: 1.5;
+      margin-bottom: 32px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      border: none;
+      padding: 13px 24px;
+      border-radius: var(--radius-input);
+      font-size: 0.925rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px var(--accent-glow);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .footer {
+      margin-top: 28px;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    .footer a {
+      color: var(--accent);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .footer a:hover {
+      color: var(--accent-hover);
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 16px;
+        align-items: flex-start;
+        padding-top: max(env(safe-area-inset-top, 0px), 40px);
+      }
+
+      .card {
+        padding: 36px 24px;
+        border-radius: 14px;
+      }
+
+      .icon { font-size: 3rem; }
+      .title { font-size: 1.3rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <span class="icon">⏰</span>
+    <h1 class="title">Trial Period Ended</h1>
+    <p class="subtitle">Your trial access to Scratchy has expired.</p>
+    <p class="message">Contact your administrator to extend your access or upgrade your account.</p>
+    <a href="/" class="btn">Back to Login</a>
+    <p class="footer">Secured by <a href="https://clawos.fr" target="_blank" rel="noopener">ClawOS</a></p>
+  </div>
+</body>
+</html>

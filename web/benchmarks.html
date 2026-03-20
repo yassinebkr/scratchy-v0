@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Light Benchmarks: Gemini vs Opus</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html{font-size:16px;-webkit-text-size-adjust:100%}
+body{background:#0f1117;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;padding:16px;max-width:1200px;margin:0 auto;font-size:1rem;line-height:1.5}
+h1{font-size:1.5em;margin-bottom:4px}
+.sub{color:#94a3b8;font-size:.85em;margin-bottom:16px}
+.back-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;background:#1e2030;color:#94a3b8;text-decoration:none;font-size:.85em;border:1px solid #2a2d3e;transition:.2s;margin-bottom:16px}
+.back-btn:hover{background:#252838;color:#fff}
+.nav{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.nav a{padding:8px 16px;border-radius:8px;text-decoration:none;font-size:.85em;background:#1e2030;color:#94a3b8;border:1px solid #2a2d3e;transition:.2s}
+.nav a:hover{background:#252838}
+.nav a.active{background:#2a2d3e;color:#fff;border-color:#4285f4}
+.tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.tab{padding:8px 16px;border-radius:8px;cursor:pointer;background:#1e2030;border:1px solid #2a2d3e;font-size:.85em;color:#94a3b8;transition:.2s}
+.tab.active{background:#2a2d3e;color:#fff;border-color:#4285f4}
+.tab:hover{background:#252838}
+.section{display:none}.section.active{display:block}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:800px){.grid{grid-template-columns:1fr}}
+.panel{background:#1a1d2e;border-radius:12px;padding:16px;border:1px solid #2a2d3e}
+.panel.gemini{border-top:3px solid #4285f4}
+.panel.opus{border-top:3px solid #8b5cf6}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.75em;font-weight:600;margin-bottom:10px}
+.badge.gemini{background:#4285f420;color:#4285f4}
+.badge.opus{background:#8b5cf620;color:#8b5cf6}
+.meta{color:#64748b;font-size:.78em;margin-bottom:12px}
+
+/* Task description */
+.task-desc{background:#151825;border:1px solid #2a2d3e;border-radius:8px;padding:14px;margin-bottom:16px}
+.task-desc h3{font-size:.9em;color:#fff;margin-bottom:6px}
+.task-desc p{font-size:.82em;color:#94a3b8;line-height:1.5}
+.task-desc .prompt{font-family:monospace;background:#0d1017;padding:10px;border-radius:6px;font-size:.8em;color:#cbd5e1;margin-top:8px;white-space:pre-wrap;border:1px solid #2a2d3e}
+
+/* Components */
+.hero-card{padding:20px;border-radius:10px;margin-bottom:10px;text-align:center}
+.hero-card h2{font-size:1.2em;margin-bottom:4px}
+.hero-card .sub{color:#94a3b8;font-size:.82em;margin-bottom:0}
+.status-bar{padding:6px 14px;border-radius:6px;background:#10b98115;color:#10b981;font-size:.8em;text-align:center;margin-bottom:10px;font-weight:600}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:6px;margin-bottom:10px}
+.stat-card{background:#151825;padding:10px;border-radius:8px;text-align:center}
+.stat-card .val{font-size:1.1em;font-weight:700;color:#fff}
+.stat-card .lbl{font-size:.7em;color:#94a3b8;margin-top:2px}
+.stat-card .trend{font-size:.65em;margin-top:2px}
+.gauge-wrap{text-align:center;margin-bottom:10px}
+.gauge-wrap svg{width:90px;height:90px}
+.gauge-wrap .g-label{font-size:.75em;color:#94a3b8;margin-top:4px}
+.progress-bar{margin-bottom:10px}
+.progress-bar .p-label{font-size:.78em;color:#94a3b8;margin-bottom:4px}
+.progress-bar .track{background:#1e2030;border-radius:6px;height:10px;overflow:hidden}
+.progress-bar .fill{height:100%;border-radius:6px}
+.bar-chart{margin-bottom:10px}
+.bar-chart .title{font-size:.8em;color:#94a3b8;margin-bottom:6px}
+.bar-item{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+.bar-item .b-label{width:80px;font-size:.75em;color:#94a3b8;text-align:right;flex-shrink:0}
+.bar-item .b-track{flex:1;background:#1e2030;border-radius:4px;height:8px;overflow:hidden}
+.bar-item .b-fill{height:100%;border-radius:4px}
+.bar-item .b-val{width:30px;font-size:.7em;color:#64748b}
+.timeline{margin-bottom:10px;padding-left:18px;border-left:2px dashed #2a2d3e}
+.tl-item{margin-bottom:10px;position:relative}
+.tl-item::before{content:'';position:absolute;left:-23px;top:4px;width:8px;height:8px;border-radius:50%;background:#3b82f6}
+.tl-item .tl-date{font-size:.7em;color:#64748b}
+.tl-item .tl-title{font-size:.8em;color:#fff;font-weight:600}
+.tl-item .tl-text{font-size:.75em;color:#94a3b8}
+.blockquote{background:#151825;border-left:3px solid #3b82f6;padding:14px;border-radius:0 8px 8px 0;font-style:italic;font-size:.85em;line-height:1.6;color:#cbd5e1;margin-bottom:10px}
+.blockquote.opus-q{border-left-color:#8b5cf6}
+.alert-box{padding:10px 14px;border-radius:8px;font-size:.82em;margin-bottom:10px}
+.alert-box.info{background:#3b82f615;color:#3b82f6;border:1px solid #3b82f630}
+.alert-box.warn{background:#f59e0b15;color:#f59e0b;border:1px solid #f59e0b30}
+.alert-box.err{background:#ef444415;color:#ef4444;border:1px solid #ef444430}
+.alert-box.ok{background:#10b98115;color:#10b981;border:1px solid #10b98130}
+.kv-table{width:100%;font-size:.78em;margin-bottom:10px}
+.kv-table td{padding:4px 8px;border-bottom:1px solid #1e2030}
+.kv-table td:first-child{color:#94a3b8;width:40%}
+.tags-wrap{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.tag{padding:3px 10px;border-radius:12px;font-size:.72em;font-weight:600}
+.sparkline-row{display:flex;align-items:center;gap:10px;background:#151825;padding:8px;border-radius:8px;margin-bottom:6px}
+.sparkline-row .s-label{font-size:.75em;color:#94a3b8;width:100px}
+.sparkline-row .s-val{font-size:.85em;font-weight:600;color:#fff}
+.sparkline-row svg{flex:1;height:28px}
+.pie-wrap{text-align:center;margin-bottom:10px}
+.pie-wrap svg{width:100px;height:100px}
+.pie-legend{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:6px}
+.pie-legend span{font-size:.7em;color:#94a3b8}
+.pie-legend .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:3px}
+.code-block{background:#0d1017;border:1px solid #2a2d3e;border-radius:8px;padding:12px;font-family:monospace;font-size:.78em;line-height:1.4;color:#a5b4c4;overflow-x:auto;margin-bottom:10px;white-space:pre}
+.summary{margin-top:24px;background:#1a1d2e;border-radius:12px;padding:16px;border:1px solid #2a2d3e}
+.summary h2{font-size:1em;margin-bottom:10px}
+.summary table{width:100%;border-collapse:collapse;font-size:.82em}
+.summary th{text-align:left;padding:6px 8px;border-bottom:2px solid #2a2d3e;color:#94a3b8}
+.summary td{padding:6px 8px;border-bottom:1px solid #1e2030}
+.summary td:nth-child(2){color:#4285f4}
+.summary td:nth-child(3){color:#8b5cf6}
+.verdict{margin-top:16px;background:#1a1d2e;border-radius:12px;padding:16px;border:1px solid #8b5cf630;border-left:4px solid #8b5cf6}
+.verdict h3{font-size:.9em;margin-bottom:6px;color:#8b5cf6}
+.verdict p{font-size:.82em;line-height:1.6;color:#cbd5e1}
+.comp-count{font-size:.72em;color:#64748b;margin-bottom:6px}
+</style>
+</head>
+<body>
+
+<a href="/" class="back-btn">&#x2190; Back to Chat</a>
+
+<h1>&#x1f3a8; Light Benchmarks</h1>
+<div class="sub">Gemini 3 Pro (CLI OAuth) vs Claude Opus 4.6 &mdash; February 17, 2026</div>
+
+<div class="nav">
+<a href="benchmarks.html" class="active">&#x1f3a8; Light Tasks</a>
+<a href="benchmarks-heavy.html">&#x1f9e0; Heavy Reasoning</a>
+</div>
+
+<div class="tabs">
+<div class="tab active" onclick="showTab('ui')">&#x1f3a8; UI Generation</div>
+<div class="tab" onclick="showTab('narrate')">&#x1f399; Narration</div>
+<div class="tab" onclick="showTab('code')">&#x1f4bb; Coding</div>
+</div>
+
+<!-- ============ UI TAB ============ -->
+<div id="tab-ui" class="section active">
+
+<div class="task-desc">
+<h3>&#x1f3af; The Task</h3>
+<p>Generate a rich, multi-component GenUI dashboard using Scratchy UI components. The agent receives a prompt describing a fictional scenario and must produce as many relevant, visually-diverse components as possible &mdash; hero cards, stat grids, gauges, progress bars, charts, timelines, alerts, and more.</p>
+<div class="prompt">Prompt: "Create a mission control dashboard for a Mars-bound spacecraft (Ares IV). Include crew health, fuel reserves, transit progress, system status, resource usage, and a mission timeline. Use as many different component types as possible."</div>
+</div>
+
+<div class="grid">
+<div class="panel gemini">
+<span class="badge gemini">Gemini 3 Pro</span>
+<div class="meta">18s &bull; 9.3k tokens &bull; 7 components</div>
+<div class="comp-count">Components used: hero, status, stats (3), gauge (1), progress (1), bar-chart (1), timeline (1)</div>
+
+<div class="hero-card" style="background:linear-gradient(135deg,#0f2027,#203a43,#2c5364)">
+<div style="font-size:2em">&#x1f680;</div>
+<h2>Mission Ares IV</h2>
+<div class="sub">En route to Mars &bull; Day 142</div>
+</div>
+<div class="status-bar">SYSTEMS NOMINAL &bull; COMM LINK ACTIVE</div>
+<div class="stat-grid">
+<div class="stat-card"><div class="val">68 BPM</div><div class="lbl">Avg Heart Rate</div><div class="trend" style="color:#10b981">Stable</div></div>
+<div class="stat-card"><div class="val">101.3 kPa</div><div class="lbl">Cabin Pressure</div><div class="trend" style="color:#3b82f6">0%</div></div>
+<div class="stat-card"><div class="val">12 mSv</div><div class="lbl">Ext Radiation</div><div class="trend" style="color:#f59e0b">+2%</div></div>
+</div>
+<div class="gauge-wrap">
+<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="#1e2030" stroke-width="8"/><circle cx="50" cy="50" r="40" fill="none" stroke="#3b82f6" stroke-width="8" stroke-dasharray="180.7 70.3" stroke-dashoffset="62.8" stroke-linecap="round" transform="rotate(-90 50 50)"/><text x="50" y="54" text-anchor="middle" fill="#fff" font-size="16" font-weight="bold">72%</text></svg>
+<div class="g-label">Liquid Hydrogen Reserves</div>
+</div>
+<div class="progress-bar"><div class="p-label">Distance to Mars Orbit Injection &mdash; 64%</div><div class="track"><div class="fill" style="width:64%;background:#3b82f6"></div></div></div>
+<div class="bar-chart"><div class="title">Resource Usage (Weekly)</div>
+<div class="bar-item"><span class="b-label">Water</span><div class="b-track"><div class="b-fill" style="width:94%;background:#3b82f6"></div></div><span class="b-val">94%</span></div>
+<div class="bar-item"><span class="b-label">Food</span><div class="b-track"><div class="b-fill" style="width:88%;background:#10b981"></div></div><span class="b-val">88%</span></div>
+<div class="bar-item"><span class="b-label">Solar</span><div class="b-track"><div class="b-fill" style="width:98%;background:#f59e0b"></div></div><span class="b-val">98%</span></div>
+<div class="bar-item"><span class="b-label">Battery</span><div class="b-track"><div class="b-fill" style="width:100%;background:#8b5cf6"></div></div><span class="b-val">100%</span></div>
+</div>
+<div class="timeline">
+<div class="tl-item"><div class="tl-date">Day 142 (Today)</div><div class="tl-title">Mid-Course Correction</div><div class="tl-text">Thruster burn scheduled for 14:00 UTC</div></div>
+<div class="tl-item"><div class="tl-date">Day 180</div><div class="tl-title">Sensor Array Calibration</div><div class="tl-text">Deep space telescope maintenance</div></div>
+<div class="tl-item"><div class="tl-date">Day 210</div><div class="tl-title">Mars Approach</div><div class="tl-text">Begin deceleration sequence</div></div>
+</div>
+
+<div class="alert-box info">&#x1f4a1; <b>Analysis:</b> Fast, clean output. Used 7 distinct component types. Dashboard tells a coherent story but stays surface-level &mdash; no individual crew members, no detailed orbital mechanics, no secondary visualizations.</div>
+</div>
+
+<div class="panel opus">
+<span class="badge opus">Claude Opus 4.6</span>
+<div class="meta">27s &bull; 12.7k tokens &bull; 15 components</div>
+<div class="comp-count">Components used: hero, status, stats (4+4), gauge (2), progress (1), bar-chart (2), sparkline (2), timeline (7), pie (1), alert (1), kv-table (1), tags (6)</div>
+
+<div class="hero-card" style="background:linear-gradient(135deg,#0f0c29,#302b63,#24243e)">
+<div style="font-size:2em">&#x1f680;</div>
+<h2>ARES IV &mdash; Mars Mission Control</h2>
+<div class="sub">Mission Day 187 &bull; En Route to Mars &bull; All Systems Nominal</div>
+</div>
+<div class="status-bar">MISSION STATUS: EN ROUTE &mdash; Trajectory Locked</div>
+<div class="stat-grid">
+<div class="stat-card"><div class="val">187</div><div class="lbl">Mission Day</div><div class="trend" style="color:#8b5cf6">+1/day</div></div>
+<div class="stat-card"><div class="val">98.4M km</div><div class="lbl">Distance to Mars</div><div class="trend" style="color:#f59e0b">-412K/day</div></div>
+<div class="stat-card"><div class="val">24.6 km/s</div><div class="lbl">Velocity</div><div class="trend" style="color:#3b82f6">+0.02</div></div>
+<div class="stat-card"><div class="val">8m 42s</div><div class="lbl">Signal Delay</div><div class="trend" style="color:#ef4444">+3s/day</div></div>
+</div>
+<div class="progress-bar"><div class="p-label">Earth &#x2192; Mars Transit Progress &mdash; 63%</div><div class="track"><div class="fill" style="width:63%;background:#8b5cf6"></div></div></div>
+<div class="gauge-wrap">
+<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="#1e2030" stroke-width="8"/><circle cx="50" cy="50" r="40" fill="none" stroke="#f59e0b" stroke-width="8" stroke-dasharray="178.2 72.8" stroke-dashoffset="62.8" stroke-linecap="round" transform="rotate(-90 50 50)"/><text x="50" y="54" text-anchor="middle" fill="#fff" font-size="16" font-weight="bold">71%</text></svg>
+<div class="g-label">Fuel Reserves</div>
+</div>
+<div class="stat-grid">
+<div class="stat-card"><div class="val">98/100</div><div class="lbl">Cmdr. Vasquez</div><div class="trend" style="color:#10b981">Nominal</div></div>
+<div class="stat-card"><div class="val">95/100</div><div class="lbl">Dr. Okafor</div><div class="trend" style="color:#10b981">Nominal</div></div>
+<div class="stat-card"><div class="val">92/100</div><div class="lbl">Eng. Tanaka</div><div class="trend" style="color:#f59e0b">Minor fatigue</div></div>
+<div class="stat-card"><div class="val">97/100</div><div class="lbl">Plt. Johanssen</div><div class="trend" style="color:#10b981">Nominal</div></div>
+</div>
+<div class="bar-chart"><div class="title">Crew Sleep Quality (7-Day Avg)</div>
+<div class="bar-item"><span class="b-label">Vasquez</span><div class="b-track"><div class="b-fill" style="width:88%;background:#8b5cf6"></div></div><span class="b-val">88%</span></div>
+<div class="bar-item"><span class="b-label">Okafor</span><div class="b-track"><div class="b-fill" style="width:82%;background:#8b5cf6"></div></div><span class="b-val">82%</span></div>
+<div class="bar-item"><span class="b-label">Tanaka</span><div class="b-track"><div class="b-fill" style="width:68%;background:#f59e0b"></div></div><span class="b-val">68%</span></div>
+<div class="bar-item"><span class="b-label">Johanssen</span><div class="b-track"><div class="b-fill" style="width:91%;background:#8b5cf6"></div></div><span class="b-val">91%</span></div>
+</div>
+<div class="bar-chart"><div class="title">System Resource Levels</div>
+<div class="bar-item"><span class="b-label">O2 Supply</span><div class="b-track"><div class="b-fill" style="width:84%;background:#3b82f6"></div></div><span class="b-val">84%</span></div>
+<div class="bar-item"><span class="b-label">H2O</span><div class="b-track"><div class="b-fill" style="width:76%;background:#06b6d4"></div></div><span class="b-val">76%</span></div>
+<div class="bar-item"><span class="b-label">Food</span><div class="b-track"><div class="b-fill" style="width:69%;background:#10b981"></div></div><span class="b-val">69%</span></div>
+<div class="bar-item"><span class="b-label">Power</span><div class="b-track"><div class="b-fill" style="width:92%;background:#f59e0b"></div></div><span class="b-val">92%</span></div>
+<div class="bar-item"><span class="b-label">Fuel</span><div class="b-track"><div class="b-fill" style="width:71%;background:#ef4444"></div></div><span class="b-val">71%</span></div>
+</div>
+<div class="sparkline-row"><span class="s-label">Radiation</span><span class="s-val" style="color:#ef4444">0.47 mSv/day</span><svg viewBox="0 0 120 30"><polyline points="0,18 10,15 20,16 30,12 40,9 50,13 60,17 70,14 80,11 90,13 100,16 110,18" fill="none" stroke="#ef4444" stroke-width="2"/></svg><span style="color:#10b981;font-size:.75em">-2.1%</span></div>
+<div class="sparkline-row"><span class="s-label">Hull Temp</span><span class="s-val" style="color:#3b82f6">-42&#176;C</span><svg viewBox="0 0 120 30"><polyline points="0,20 10,18 20,16 30,17 40,15 50,14 60,16 70,18 80,19 90,17 100,16 110,15" fill="none" stroke="#3b82f6" stroke-width="2"/></svg><span style="color:#94a3b8;font-size:.75em">Stable</span></div>
+<div class="timeline">
+<div class="tl-item"><div class="tl-date">Day 1</div><div class="tl-title">&#x1f680; Launch from Cape Canaveral</div></div>
+<div class="tl-item"><div class="tl-date">Day 14</div><div class="tl-title">&#x1f525; Trans-Mars Injection Burn</div></div>
+<div class="tl-item"><div class="tl-date">Day 92</div><div class="tl-title">&#x1f3af; Mid-Course Correction</div></div>
+<div class="tl-item" style="border-left:2px solid #f59e0b"><div class="tl-date">Day 187</div><div class="tl-title">&#x1f4cd; TODAY &mdash; Cruise Phase</div></div>
+<div class="tl-item"><div class="tl-date">Day 245</div><div class="tl-title">&#x1fa90; Mars Orbital Insertion</div></div>
+<div class="tl-item"><div class="tl-date">Day 251</div><div class="tl-title">&#x1f3c1; Surface Landing &mdash; Jezero</div></div>
+<div class="tl-item"><div class="tl-date">Day 400</div><div class="tl-title">&#x1f30d; Return Window Opens</div></div>
+</div>
+<div class="gauge-wrap">
+<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="#1e2030" stroke-width="8"/><circle cx="50" cy="50" r="40" fill="none" stroke="#3b82f6" stroke-width="8" stroke-dasharray="205.8 45.2" stroke-dashoffset="62.8" stroke-linecap="round" transform="rotate(-90 50 50)"/><text x="50" y="54" text-anchor="middle" fill="#fff" font-size="16" font-weight="bold">82%</text></svg>
+<div class="g-label">Communication Link</div>
+</div>
+<div class="pie-wrap">
+<div style="font-size:.8em;color:#94a3b8;margin-bottom:6px">Power Allocation</div>
+<svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="50" fill="none" stroke="#10b981" stroke-width="20" stroke-dasharray="109.9 204.1" stroke-dashoffset="0" transform="rotate(-90 60 60)"/><circle cx="60" cy="60" r="50" fill="none" stroke="#f59e0b" stroke-width="20" stroke-dasharray="78.5 235.5" stroke-dashoffset="-109.9" transform="rotate(-90 60 60)"/><circle cx="60" cy="60" r="50" fill="none" stroke="#8b5cf6" stroke-width="20" stroke-dasharray="47.1 266.9" stroke-dashoffset="-188.4" transform="rotate(-90 60 60)"/><circle cx="60" cy="60" r="50" fill="none" stroke="#3b82f6" stroke-width="20" stroke-dasharray="37.7 276.3" stroke-dashoffset="-235.5" transform="rotate(-90 60 60)"/><circle cx="60" cy="60" r="50" fill="none" stroke="#6b7280" stroke-width="20" stroke-dasharray="40.8 273.2" stroke-dashoffset="-273.2" transform="rotate(-90 60 60)"/><circle cx="60" cy="60" r="38" fill="#1a1d2e"/></svg>
+<div class="pie-legend"><span><span class="dot" style="background:#10b981"></span>Life Support 35%</span><span><span class="dot" style="background:#f59e0b"></span>Propulsion 25%</span><span><span class="dot" style="background:#8b5cf6"></span>Science 15%</span><span><span class="dot" style="background:#3b82f6"></span>Comms 12%</span><span><span class="dot" style="background:#6b7280"></span>Reserve 13%</span></div>
+</div>
+<div class="alert-box info">&#x1f6f0; Next EVA: Day 192 &mdash; Tanaka &amp; Johanssen assigned. Duration: 4h 30m.</div>
+<table class="kv-table"><tr><td>Heading</td><td>247.8 ecliptic</td></tr><tr><td>Inclination</td><td>1.85 deg</td></tr><tr><td>Closest Approach</td><td>Oct 14, 2029</td></tr><tr><td>Landing Target</td><td>Jezero Crater</td></tr><tr><td>Abort Window</td><td>Closes Day 210</td></tr></table>
+<div class="tags-wrap">
+<span class="tag" style="background:#10b98120;color:#10b981">Life Support: GO</span>
+<span class="tag" style="background:#10b98120;color:#10b981">Navigation: GO</span>
+<span class="tag" style="background:#10b98120;color:#10b981">Comms: GO</span>
+<span class="tag" style="background:#10b98120;color:#10b981">Thermal: GO</span>
+<span class="tag" style="background:#10b98120;color:#10b981">Hab Pressure: GO</span>
+<span class="tag" style="background:#f59e0b20;color:#f59e0b">Solar Array B: MONITOR</span>
+</div>
+
+<div class="alert-box info">&#x1f4a1; <b>Analysis:</b> Slower (27s) but dramatically richer. 15 distinct component types. Named crew with individual health scores, detailed orbital mechanics (real-feeling signal delay, velocity), sparkline telemetry, pie chart for power allocation, GO/NO-GO status tags, and a 7-point mission timeline. Feels like an actual mission control screen.</div>
+</div>
+</div>
+</div>
+
+<!-- ============ NARRATION TAB ============ -->
+<div id="tab-narrate" class="section">
+
+<div class="task-desc">
+<h3>&#x1f3af; The Task</h3>
+<p>Summarize the OpenClaw v2026.2.15 release notes in a natural, conversational tone &mdash; as if explaining the changes to a developer friend over coffee. The output should read like a podcast segment, not documentation. Key features to cover: plugin hot-reload, auth overhaul, memory compaction, breaking changes, and performance improvements.</p>
+<div class="prompt">Prompt: "Read the OpenClaw v2026.2.15 changelog and summarize it conversationally. Talk like you're telling a developer friend about the release. Keep it under 500 words. Be specific about numbers and details."</div>
+</div>
+
+<div class="grid">
+<div class="panel gemini">
+<span class="badge gemini">Gemini 3 Pro</span>
+<div class="meta">9s &bull; 8.2k tokens in &bull; 480 tokens out</div>
+<div class="blockquote">Alright, let's talk about what's new in OpenClaw version 2026.2.15. There is some genuinely cool stuff in here.<br><br>First off, for the plugin developers&mdash;you're gonna love this. We finally have true <b>hot-reloading</b>. You can now trigger a zero-downtime restart just by sending a SIGUSR1 signal. No more killing the process and waiting for it to come back up; it just... refreshes instantly.<br><br>We've also completely overhauled authentication. The new profile store is way smarter. It handles OAuth credential rotation, supports the secure PKCE flow, and does automatic token refreshing in the background. Basically, it just keeps your connections alive without you having to baby-sit them.<br><br>Now, the big one: <b>Memory</b>. We've introduced a new context pruning system that is&hellip; honestly, kind of magic. It can take a massive, one-million-token conversation and squeeze it down to about two hundred thousand, <em>without</em> losing the thread of the conversation.<br><br>Quick heads-up on a breaking change though: the import path for the plugin SDK has moved. Don't worry about rewriting everything manually&mdash;just run openclaw doctor --fix.<br><br>Oh, and performance? Cold starts are about forty percent faster now. It feels snappy. Give it a spin!</div>
+<div class="alert-box ok">&#x2705; <b>Style:</b> Warm, enthusiastic, podcast-like. Uses "you" and "we" naturally. Good flow but less technical depth &mdash; doesn't mention WebSocket reconnect, cache-TTL, or lazy init specifics.</div>
+</div>
+
+<div class="panel opus">
+<span class="badge opus">Claude Opus 4.6</span>
+<div class="meta">10s &bull; 11.7k tokens in &bull; 373 tokens out</div>
+<div class="blockquote opus-q">Okay so &mdash; OpenClaw just dropped version 2026.2.15, and honestly? There's some really nice stuff in here.<br><br>First up &mdash; plugin hot-reload. You can now send a SIGUSR1 signal and your plugins restart with zero downtime. No more bouncing the whole system just to swap out a module. That alone is huge.<br><br>Auth got a major upgrade too. There's a proper profile store now with OAuth credential rotation, PKCE flow support, and &mdash; this is the part I love &mdash; automatic token refresh. So you're not scrambling when tokens expire mid-session anymore.<br><br>On the memory side, compaction switched to a cache-TTL mode. You can configure staleness windows, which gives you way more control. And context pruning? They're taking million-token conversations down to about 200k &mdash; while keeping semantic coherence intact. That's... genuinely impressive.<br><br>Now &mdash; heads up &mdash; there is a breaking change. The plugin SDK import path moved. But don't panic. Just run openclaw doctor --fix and it handles the migration for you.<br><br>Performance-wise, cold starts are 40% faster thanks to lazy provider initialization. And WebSocket reconnection finally uses exponential backoff with jitter &mdash; one-second base, fifteen-second cap, twenty max attempts. Much more resilient.<br><br>Solid release overall.</div>
+<div class="alert-box ok">&#x2705; <b>Style:</b> Tighter, more technical. Mentions cache-TTL, lazy init, WebSocket backoff with exact numbers. Less warmth, more precision. The "this is the part I love" adds personality without overdoing it.</div>
+</div>
+</div>
+</div>
+
+<!-- ============ CODE TAB ============ -->
+<div id="tab-code" class="section">
+
+<div class="task-desc">
+<h3>&#x1f3af; The Task</h3>
+<p>Write a production-grade TypeScript implementation of a generic retry queue with exponential backoff, circuit breaker pattern, typed events, and concurrency control. Must include full JSDoc documentation, proper generics, and be ready for a real codebase &mdash; not a toy example.</p>
+<div class="prompt">Prompt: "Write a complete, production-ready retry-queue.ts &mdash; a generic RetryQueue&lt;T&gt; class with configurable exponential backoff, circuit breaker, typed event system, concurrency slots, dead letter queue, and full JSDoc on every public method."</div>
+</div>
+
+<div class="grid">
+<div class="panel gemini">
+<span class="badge gemini">Gemini 3 Pro (HIGH thinking)</span>
+<div class="meta">~113s &bull; 12.7k tokens &bull; 364 lines &bull; 10.8KB</div>
+<div class="alert-box ok">&#x2705; <b>Complete implementation written</b></div>
+<p style="font-size:.78em;color:#64748b;margin-bottom:8px">Clean single-attempt run (correct OAuth provider, 240s timeout). Previous attempts failed due to wrong API provider + gateway restart.</p>
+<div class="code-block">// Key architecture decisions:
+export enum CircuitState {
+  CLOSED = 'CLOSED',    // Normal operation
+  OPEN = 'OPEN',        // Failures exceeded threshold
+  HALF_OPEN = 'HALF_OPEN' // Probing with single task
+}
+
+export class RetryQueue&lt;T&gt; {
+  // Backoff with jitter (thundering herd prevention)
+  private baseDelayMs = 1000;
+  private maxDelayMs = 30_000;
+  private jitter = 0.1; // 0-1 factor
+
+  // 3-state circuit breaker
+  private circuitThreshold = 5;
+  private circuitCooldownMs = 10_000;
+
+  // Concurrency
+  private concurrency = 1;
+
+  // Typed events (strict payloads)
+  on(event: 'success', cb): void;
+  on(event: 'failure', cb): void;
+  on(event: 'retry', cb): void;
+  on(event: 'dlq', cb): void;
+  on(event: 'circuit-open', cb): void;
+  on(event: 'circuit-close', cb): void;
+
+  // Public API
+  enqueue(item: T): string; // returns task ID
+  start(): void;
+  stop(): void;
+  getDlq(): T[];
+}</div>
+<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px">
+<span class="tag" style="background:#4285f420;color:#4285f4">364 lines</span>
+<span class="tag" style="background:#4285f420;color:#4285f4">10.8KB</span>
+<span class="tag" style="background:#4285f420;color:#4285f4">Full JSDoc</span>
+<span class="tag" style="background:#4285f420;color:#4285f4">Generic&lt;T&gt;</span>
+<span class="tag" style="background:#4285f420;color:#4285f4">3-state circuit breaker</span>
+<span class="tag" style="background:#4285f420;color:#4285f4">UUID task IDs</span>
+<span class="tag" style="background:#4285f420;color:#4285f4">6 event types</span>
+<span class="tag" style="background:#f59e0b20;color:#f59e0b">~113s</span>
+</div>
+</div>
+
+<div class="panel opus">
+<span class="badge opus">Claude Opus 4.6</span>
+<div class="meta">~30s &bull; 15.5k tokens &bull; 459 lines &bull; 14.9KB</div>
+<div class="alert-box ok">&#x2705; <b>Complete implementation written</b></div>
+<div class="code-block">// Key architecture decisions:
+export enum QueueState { Idle, Running, CircuitOpen }
+
+export class RetryQueue&lt;T&gt; {
+  // Configurable backoff
+  private baseDelayMs = 200;
+  private maxDelayMs = 30_000;
+  private jitter = true;
+
+  // Circuit breaker
+  private circuitBreakerThreshold = 10;
+  private consecutiveFailures = 0;
+  private state = QueueState.Idle;
+
+  // Concurrency
+  private maxConcurrent = 3;
+  private inflight = new Set&lt;Promise&lt;void&gt;&gt;();
+
+  // Typed events
+  on(event: 'success', cb): Unsubscribe;
+  on(event: 'failure', cb): Unsubscribe;
+  on(event: 'circuit-open', cb): Unsubscribe;
+
+  // Public API
+  enqueue(item: T): void;
+  start(): void;
+  stop(): Promise&lt;void&gt;;
+  pause(): void;
+  resume(): void;
+  getDeadLetterQueue(): T[];
+}</div>
+<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px">
+<span class="tag" style="background:#8b5cf620;color:#8b5cf6">459 lines</span>
+<span class="tag" style="background:#8b5cf620;color:#8b5cf6">14.9KB</span>
+<span class="tag" style="background:#8b5cf620;color:#8b5cf6">Full JSDoc</span>
+<span class="tag" style="background:#8b5cf620;color:#8b5cf6">Generic&lt;T&gt;</span>
+<span class="tag" style="background:#8b5cf620;color:#8b5cf6">Circuit breaker</span>
+<span class="tag" style="background:#8b5cf620;color:#8b5cf6">Event system</span>
+<span class="tag" style="background:#8b5cf620;color:#8b5cf6">Concurrency slots</span>
+</div>
+</div>
+</div>
+</div>
+
+<!-- ============ SUMMARY ============ -->
+<div class="summary">
+<h2>&#x1f4ca; Summary</h2>
+<table>
+<tr><th>Metric</th><th>Gemini 3 Pro</th><th>Opus 4.6</th></tr>
+<tr><td>UI &mdash; Time</td><td>18s</td><td>27s</td></tr>
+<tr><td>UI &mdash; Components</td><td>7</td><td>15</td></tr>
+<tr><td>UI &mdash; Depth</td><td>Surface dashboard</td><td>Full mission control</td></tr>
+<tr><td>Narration &mdash; Time</td><td>9s</td><td>10s</td></tr>
+<tr><td>Narration &mdash; Style</td><td>Warm, podcast-like</td><td>Tight, technical</td></tr>
+<tr><td>Narration &mdash; Detail</td><td>High-level features</td><td>Exact numbers + internals</td></tr>
+<tr><td>Code &mdash; Time</td><td>~113s</td><td>~30s</td></tr>
+<tr><td>Code &mdash; Output</td><td>10.8KB, 364 lines</td><td>14.9KB, 459 lines</td></tr>
+<tr><td>Code &mdash; Circuit Breaker</td><td>3-state (Closed/Open/HalfOpen)</td><td>2-state (Idle/CircuitOpen)</td></tr>
+<tr><td>Code &mdash; Events</td><td>6 (+ retry, dlq)</td><td>4 (success, failure, open, close)</td></tr>
+<tr><td>Code &mdash; Extras</td><td>UUID task IDs, jitter factor</td><td>Pause/resume, DLQ access</td></tr>
+<tr><td>Cost</td><td>$0 (OAuth sub)</td><td>$0 (Max sub)</td></tr>
+</table>
+</div>
+
+<div class="verdict">
+<h3>&#x1f4a1; Verdict</h3>
+<p><b>Speed vs Depth, consistently.</b> Gemini is ~2x faster for quick tasks (UI: 18s vs 27s, narration: 9s vs 10s) but ~4x slower for code (~113s vs ~30s). Both models wrote solid RetryQueue implementations with 3-state circuit breakers and typed events. Gemini's is more compact (364 lines vs 459) with UUID task IDs and a jitter factor; Opus's is larger with pause/resume and more granular lifecycle. The key difference is <b>time-to-delivery</b>: Gemini spends ~90s thinking before writing, Opus writes immediately. For quick creative tasks, Gemini wins. For code, Opus delivers 4x faster with comparable quality. Both at $0 (subscription tiers).</p>
+</div>
+
+<script>
+function showTab(id) {
+  document.querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); });
+  document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+  document.getElementById('tab-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Scratchy — Login</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0a0a0a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Scratchy">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <!-- CSRF token injected by server via html.replace("</head>", ...) -->
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #0a0a0a;
+      --card-bg: rgba(255,255,255,0.03);
+      --card-border: rgba(255,255,255,0.06);
+      --accent: #7c3aed;
+      --accent-hover: #8b5cf6;
+      --accent-glow: rgba(124,58,237,0.25);
+      --error: #ef4444;
+      --error-bg: rgba(239,68,68,0.08);
+      --error-border: rgba(239,68,68,0.25);
+      --success: #22c55e;
+      --success-bg: rgba(34,197,94,0.08);
+      --success-border: rgba(34,197,94,0.25);
+      --text-primary: #e4e4e7;
+      --text-secondary: #71717a;
+      --text-muted: #52525b;
+      --input-bg: rgba(255,255,255,0.04);
+      --input-border: rgba(255,255,255,0.08);
+      --input-focus: #7c3aed;
+      --radius-input: 12px;
+      --radius-card: 16px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      min-height: 100dvh;
+      padding: 20px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ─── Animations ─── */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(16px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-8px); }
+      40% { transform: translateX(6px); }
+      60% { transform: translateX(-4px); }
+      80% { transform: translateX(2px); }
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes slideOut {
+      from { opacity: 1; transform: translateX(0); }
+      to { opacity: 0; transform: translateX(-20px); }
+    }
+
+    @keyframes dotPulse {
+      0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+      40% { transform: scale(1); opacity: 1; }
+    }
+
+    /* ─── Login Card ─── */
+    .login-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-card);
+      padding: 48px 40px;
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+      animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.02) inset;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Subtle gradient accent on top */
+    .login-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0.5;
+    }
+
+    .logo {
+      font-size: 3.5rem;
+      margin-bottom: 8px;
+      display: block;
+      line-height: 1.2;
+    }
+
+    .title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      margin-bottom: 32px;
+      line-height: 1.4;
+    }
+
+    /* ─── Mode Panels ─── */
+    .mode-panel {
+      display: none;
+    }
+
+    .mode-panel.active {
+      display: block;
+      animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .mode-panel.exiting {
+      animation: slideOut 0.2s ease-in forwards;
+    }
+
+    /* ─── Loading State ─── */
+    .loading-dots {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      padding: 24px 0;
+    }
+
+    .loading-dots span {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: dotPulse 1.2s ease-in-out infinite;
+    }
+
+    .loading-dots span:nth-child(2) { animation-delay: 0.16s; }
+    .loading-dots span:nth-child(3) { animation-delay: 0.32s; }
+
+    .loading-text {
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      margin-top: 8px;
+    }
+
+    /* ─── Form Elements ─── */
+    .form-group {
+      position: relative;
+      margin-bottom: 16px;
+      text-align: left;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+      letter-spacing: 0.01em;
+    }
+
+    .input-wrap {
+      position: relative;
+    }
+
+    .form-group input {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      color: var(--text-primary);
+      padding: 12px 16px;
+      border-radius: var(--radius-input);
+      font-size: 0.925rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-group input:focus {
+      border-color: var(--input-focus);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .form-group input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .form-group input.has-toggle {
+      padding-right: 48px;
+    }
+
+    .toggle-vis {
+      position: absolute;
+      right: 4px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1.1rem;
+      padding: 8px;
+      line-height: 1;
+      transition: color 0.2s;
+      border-radius: 8px;
+    }
+
+    .toggle-vis:hover {
+      color: var(--text-primary);
+    }
+
+    /* ─── Divider ─── */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 20px 0;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--input-border);
+    }
+
+    /* ─── Buttons ─── */
+    .btn {
+      width: 100%;
+      border: none;
+      padding: 13px 24px;
+      border-radius: var(--radius-input);
+      font-size: 0.925rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px var(--accent-glow);
+    }
+
+    .btn-primary:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      background: var(--input-bg);
+      color: var(--text-primary);
+      border: 1px solid var(--input-border);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.15);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-secondary);
+      padding: 10px 16px;
+      font-weight: 500;
+      font-size: 0.85rem;
+    }
+
+    .btn-ghost:hover:not(:disabled) {
+      color: var(--text-primary);
+      background: rgba(255,255,255,0.04);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      display: none;
+    }
+
+    .btn.loading .spinner { display: block; }
+    .btn.loading .btn-text { display: none; }
+
+    .btn + .btn {
+      margin-top: 10px;
+    }
+
+    /* Passkey icon */
+    .passkey-icon {
+      width: 20px;
+      height: 20px;
+    }
+
+    /* ─── Messages ─── */
+    .msg {
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 0.825rem;
+      margin-bottom: 16px;
+      display: none;
+      text-align: left;
+      line-height: 1.4;
+    }
+
+    .msg.visible { display: block; }
+
+    .msg-error {
+      background: var(--error-bg);
+      border: 1px solid var(--error-border);
+      color: var(--error);
+    }
+
+    .msg-error.shake {
+      animation: shake 0.4s ease-out;
+    }
+
+    .msg-success {
+      background: var(--success-bg);
+      border: 1px solid var(--success-border);
+      color: var(--success);
+    }
+
+    .msg-lockout {
+      background: var(--error-bg);
+      border: 1px solid var(--error-border);
+      color: var(--error);
+    }
+
+    .msg-lockout .lockout-timer {
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+    }
+
+    /* ─── Passkey Setup Prompt ─── */
+    .passkey-prompt {
+      background: rgba(124,58,237,0.08);
+      border: 1px solid rgba(124,58,237,0.2);
+      border-radius: var(--radius-input);
+      padding: 16px;
+      margin-top: 16px;
+      text-align: left;
+    }
+
+    .passkey-prompt h3 {
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .passkey-prompt p {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+
+    .passkey-prompt .btn-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .passkey-prompt .btn-row .btn {
+      width: auto;
+      flex: 1;
+      padding: 9px 16px;
+      font-size: 0.825rem;
+    }
+
+    /* ─── Language Grid ─── */
+    .lang-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .lang-card {
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: var(--radius-input);
+      padding: 24px 12px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      color: inherit;
+      font-family: inherit;
+    }
+
+    .lang-card:hover {
+      background: rgba(255,255,255,0.06);
+      border-color: rgba(255,255,255,0.15);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    }
+
+    .lang-card:active {
+      transform: translateY(0);
+    }
+
+    .lang-card .lang-flag {
+      font-size: 2.2rem;
+      line-height: 1;
+    }
+
+    .lang-card .lang-name {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* ─── Plan Choice Cards ─── */
+    .plan-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .plan-card {
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: var(--radius-input);
+      padding: 20px 16px;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: block;
+      width: 100%;
+      color: inherit;
+      font-family: inherit;
+    }
+
+    .plan-card:hover {
+      background: rgba(255,255,255,0.06);
+      border-color: rgba(255,255,255,0.15);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    }
+
+    .plan-card:active {
+      transform: translateY(0);
+    }
+
+    .plan-card .plan-icon {
+      font-size: 1.8rem;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .plan-card .plan-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .plan-card .plan-desc {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+      margin-bottom: 8px;
+    }
+
+    .plan-card .plan-tag {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(124,58,237,0.12);
+      color: var(--accent);
+    }
+
+    .plan-hint {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* ─── Provider Cards ─── */
+    .provider-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .provider-card .plan-icon {
+      font-size: 1.6rem;
+      font-weight: 700;
+    }
+
+    .provider-selected {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      background: rgba(124,58,237,0.08);
+      border: 1px solid rgba(124,58,237,0.2);
+      border-radius: var(--radius-input);
+      margin-bottom: 16px;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .field-hint {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    /* ─── Footer ─── */
+    .footer {
+      margin-top: 28px;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    .footer a {
+      color: var(--accent);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .footer a:hover {
+      color: var(--accent-hover);
+    }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 480px) {
+      body {
+        padding: 16px;
+        align-items: flex-start;
+        padding-top: max(env(safe-area-inset-top, 0px), 40px);
+      }
+
+      .login-card {
+        padding: 36px 24px;
+        border-radius: 14px;
+      }
+
+      .logo { font-size: 3rem; }
+      .title { font-size: 1.3rem; }
+
+      .passkey-prompt .btn-row {
+        flex-direction: column;
+      }
+    }
+
+    @media (max-width: 350px) {
+      .login-card {
+        padding: 28px 18px;
+      }
+
+      .form-group input {
+        padding: 11px 14px;
+        font-size: 0.875rem;
+      }
+
+      .btn {
+        padding: 12px 18px;
+        font-size: 0.875rem;
+      }
+    }
+
+    /* ─── iOS safe areas ─── */
+    @supports (padding: max(0px)) {
+      body {
+        padding-bottom: max(20px, env(safe-area-inset-bottom));
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-card" id="login-card">
+    <span class="logo">🐱</span>
+    <h1 class="title">Scratchy</h1>
+    <p class="subtitle" id="subtitle" data-i18n="sub.loading">Checking session&hellip;</p>
+
+    <!-- ═══ Error / Success / Lockout Messages ═══ -->
+    <div class="msg msg-error" id="error-msg"></div>
+    <div class="msg msg-success" id="success-msg"></div>
+    <div class="msg msg-lockout" id="lockout-msg"></div>
+
+    <!-- ═══ Language Selection (first screen) ═══ -->
+    <div class="mode-panel" id="mode-language">
+      <div class="lang-grid">
+        <button type="button" class="lang-card" data-lang="en">
+          <span class="lang-flag">🇬🇧</span>
+          <span class="lang-name">English</span>
+        </button>
+        <button type="button" class="lang-card" data-lang="fr">
+          <span class="lang-flag">🇫🇷</span>
+          <span class="lang-name">Français</span>
+        </button>
+        <button type="button" class="lang-card" data-lang="ar">
+          <span class="lang-flag">🇸🇦</span>
+          <span class="lang-name">العربية</span>
+        </button>
+        <button type="button" class="lang-card" data-lang="it">
+          <span class="lang-flag">🇮🇹</span>
+          <span class="lang-name">Italiano</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ═══ Loading Mode ═══ -->
+    <div class="mode-panel active" id="mode-loading">
+      <div class="loading-dots">
+        <span></span><span></span><span></span>
+      </div>
+      <p class="loading-text" data-i18n="loading.text">Connecting&hellip;</p>
+    </div>
+
+    <!-- ═══ Login Mode ═══ -->
+    <div class="mode-panel" id="mode-login">
+      <!-- Passkey button (hidden if WebAuthn unsupported or no passkeys) -->
+      <div id="passkey-section" style="display:none;">
+        <button type="button" class="btn btn-primary" id="btn-passkey-login">
+          <div class="spinner"></div>
+          <svg class="passkey-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7a4 4 0 1 0-3 3.87"/><path d="M13 14a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-1h1v-1h-1v-1a1 1 0 0 0-1-1z"/><circle cx="16.5" cy="17.5" r="0" fill="currentColor"/></svg>
+          <span class="btn-text" data-i18n="login.passkey">Sign in with Passkey</span>
+        </button>
+        <div class="divider" data-i18n="login.or">or</div>
+      </div>
+
+      <!-- Email + Password login form -->
+      <form id="login-form" autocomplete="on">
+        <div class="form-group">
+          <label for="login-email" data-i18n="login.email">Email</label>
+          <input type="email" id="login-email" name="email" placeholder="you@example.com" data-i18n-ph="login.email.ph" autocomplete="email" required>
+        </div>
+        <div class="form-group">
+          <label for="login-password" data-i18n="login.password">Password</label>
+          <div class="input-wrap">
+            <input type="password" id="login-password" name="password" placeholder="Enter password" data-i18n-ph="login.password.ph" autocomplete="current-password" class="has-toggle" required>
+            <button type="button" class="toggle-vis" data-target="login-password" title="Show password" aria-label="Toggle password visibility">
+              <span class="eye-icon">👁</span>
+            </button>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary" id="btn-login">
+          <div class="spinner"></div>
+          <span class="btn-text" data-i18n="login.submit">Sign In</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- ═══ Bootstrap / Registration Mode ═══ -->
+    <div class="mode-panel" id="mode-bootstrap">
+      <form id="register-form" autocomplete="on">
+        <div class="form-group">
+          <label for="reg-name" data-i18n="reg.name">Display Name</label>
+          <input type="text" id="reg-name" name="displayName" placeholder="Your name" data-i18n-ph="reg.name.ph" autocomplete="name" required>
+        </div>
+        <div class="form-group">
+          <label for="reg-email" data-i18n="reg.email">Email</label>
+          <input type="email" id="reg-email" name="email" placeholder="you@example.com" data-i18n-ph="reg.email.ph" autocomplete="email" required>
+        </div>
+        <div class="form-group">
+          <label for="reg-password" data-i18n="reg.password">Password</label>
+          <div class="input-wrap">
+            <input type="password" id="reg-password" name="password" placeholder="Choose a strong password" data-i18n-ph="reg.password.ph" autocomplete="new-password" class="has-toggle" required minlength="8">
+            <button type="button" class="toggle-vis" data-target="reg-password" title="Show password" aria-label="Toggle password visibility">
+              <span class="eye-icon">👁</span>
+            </button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="reg-password-confirm" data-i18n="reg.confirm">Confirm Password</label>
+          <div class="input-wrap">
+            <input type="password" id="reg-password-confirm" name="passwordConfirm" placeholder="Confirm password" data-i18n-ph="reg.confirm.ph" autocomplete="new-password" class="has-toggle" required minlength="8">
+            <button type="button" class="toggle-vis" data-target="reg-password-confirm" title="Show password" aria-label="Toggle password visibility">
+              <span class="eye-icon">👁</span>
+            </button>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary" id="btn-register">
+          <div class="spinner"></div>
+          <span class="btn-text" data-i18n="reg.submit">Create Admin Account</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- ═══ Plan Choice (shown after registration) ═══ -->
+    <div class="mode-panel" id="mode-plan-choice">
+      <div class="plan-cards">
+        <button type="button" class="plan-card" id="plan-own-key">
+          <span class="plan-icon">🔑</span>
+          <h3 class="plan-title" data-i18n="plan.own.title">Bring Your Own Key</h3>
+          <p class="plan-desc" data-i18n="plan.own.desc">Use your OpenAI, Google Gemini, or Anthropic Claude subscription. You pay for your usage directly.</p>
+          <span class="plan-tag" data-i18n="plan.own.tag">No quotas</span>
+        </button>
+        <button type="button" class="plan-card" id="plan-hosted">
+          <span class="plan-icon">🎟️</span>
+          <h3 class="plan-title" data-i18n="plan.hosted.title">Use Hosted AI</h3>
+          <p class="plan-desc" data-i18n="plan.hosted.desc">Use this instance's shared tokens. Quick start — no API key needed. Usage quotas apply.</p>
+          <span class="plan-tag" data-i18n="plan.hosted.tag">Ready to go</span>
+        </button>
+      </div>
+      <p class="plan-hint" data-i18n="plan.hint">You can change this later in Settings.</p>
+    </div>
+
+    <!-- ═══ Provider Key Entry (for own-key users) ═══ -->
+    <div class="mode-panel" id="mode-provider-key">
+      <!-- Provider selection cards -->
+      <div id="provider-select">
+        <div class="provider-cards">
+          <button type="button" class="plan-card provider-card" data-provider="openai">
+            <span class="plan-icon" style="color:#10a37f">◈</span>
+            <h3 class="plan-title" data-i18n="prov.openai">OpenAI</h3>
+            <p class="plan-desc" data-i18n="prov.openai.desc">GPT-4o, o1, Codex</p>
+          </button>
+          <button type="button" class="plan-card provider-card" data-provider="anthropic">
+            <span class="plan-icon" style="color:#d4a574">◆</span>
+            <h3 class="plan-title" data-i18n="prov.anthropic">Anthropic</h3>
+            <p class="plan-desc" data-i18n="prov.anthropic.desc">Claude Opus, Sonnet, Haiku</p>
+          </button>
+          <button type="button" class="plan-card provider-card" data-provider="google">
+            <span class="plan-icon" style="color:#4285f4">◉</span>
+            <h3 class="plan-title" data-i18n="prov.google">Google</h3>
+            <p class="plan-desc" data-i18n="prov.google.desc">Gemini Pro, Gemini Flash</p>
+          </button>
+        </div>
+      </div>
+
+      <!-- API Key input (shown after provider selection) -->
+      <div id="provider-key-input" style="display:none;">
+        <div class="provider-selected" id="provider-selected-label">
+          <span id="provider-selected-icon"></span>
+          <span id="provider-selected-name"></span>
+        </div>
+        <div class="form-group">
+          <label id="provider-key-label" for="provider-api-key" data-i18n="prov.key.label">API Key</label>
+          <div class="input-wrap">
+            <input type="password" id="provider-api-key" placeholder="sk-..." autocomplete="off" class="has-toggle">
+            <button type="button" class="toggle-vis" data-target="provider-api-key" title="Show key" aria-label="Toggle key visibility">
+              <span class="eye-icon">👁</span>
+            </button>
+          </div>
+          <p class="field-hint" id="provider-key-hint"></p>
+        </div>
+        <button type="button" class="btn btn-primary" id="btn-validate-key">
+          <div class="spinner"></div>
+          <span class="btn-text" data-i18n="prov.validate">Validate &amp; Save</span>
+        </button>
+        <button type="button" class="btn btn-ghost" id="btn-back-provider" data-i18n="prov.back">&larr; Change provider</button>
+      </div>
+
+      <button type="button" class="btn btn-ghost" id="btn-skip-provider" data-i18n="prov.skip">I'll add it later in Settings</button>
+    </div>
+
+    <!-- ═══ Passkey Setup Prompt (shown after password login) ═══ -->
+    <div class="mode-panel" id="mode-passkey-setup">
+      <div class="passkey-prompt">
+        <h3 data-i18n="pk.title">🔐 Add a Passkey?</h3>
+        <p data-i18n="pk.desc">Sign in faster next time with Face ID, Touch ID, or your security key.</p>
+        <div class="btn-row">
+          <button type="button" class="btn btn-primary" id="btn-add-passkey">
+            <div class="spinner"></div>
+            <span class="btn-text" data-i18n="pk.setup">Set Up</span>
+          </button>
+          <button type="button" class="btn btn-secondary" id="btn-skip-passkey">
+            <span class="btn-text" data-i18n="pk.skip">Not Now</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <p class="footer"><span data-i18n="footer.text">Secured by</span> <a href="https://clawos.fr" target="_blank" rel="noopener">ClawOS</a>, <span data-i18n="footer.fork">forked from</span> <a href="https://github.com/openclaw/openclaw" target="_blank" rel="noopener">OpenClaw</a></p>
+  </div>
+
+  <script src="/js/i18n.js"></script>
+  <script src="/js/login-v2.js"></script>
+</body>
+</html>

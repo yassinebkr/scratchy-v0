@@ -1,0 +1,36 @@
+# ============================================
+# Scratchy — Docker Compose
+# ============================================
+# Usage:
+#   SCRATCHY_TOKEN=your-token docker compose up -d
+#
+# Or create .env file:
+#   SCRATCHY_TOKEN=your-gateway-token
+# ============================================
+
+services:
+  scratchy:
+    build: .
+    container_name: scratchy
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - SCRATCHY_TOKEN=${SCRATCHY_TOKEN:?Set SCRATCHY_TOKEN in .env or environment}
+    volumes:
+      # Mount OpenClaw config (read-only) for auto token detection + history
+      - ${HOME}/.openclaw:/home/scratchy/.openclaw:ro
+    # Security hardening
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:size=64m
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "1.0"

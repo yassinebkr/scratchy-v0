@@ -1,0 +1,67 @@
+/* ============================================
+   Scratchy — Liquid Glass Light Theme
+   ============================================ */
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  /* ── Surfaces ── */
+  --surface-0: #f8f8fa;
+  --surface-1: #ffffff;
+  --surface-2: #f2f2f5;
+  --surface-3: #ffffff;
+  --surface-4: #ffffff;
+
+  /* ── Glass surfaces ── */
+  --glass-subtle: rgba(0, 0, 0, 0.02);
+  --glass-medium: rgba(0, 0, 0, 0.04);
+  --glass-strong: rgba(0, 0, 0, 0.07);
+  --glass-border: rgba(0, 0, 0, 0.08);
+
+  /* ── Text ── */
+  --text-primary: #111113;
+  --text-secondary: #60606b;
+  --text-tertiary: #9d9da8;
+  --text-ghost: #c8c8d0;
+
+  /* ── Accent — Indigo ── */
+  --accent: #4f46e5;
+  --accent-hover: #4338ca;
+  --accent-muted: rgba(79, 70, 229, 0.08);
+  --accent-border: rgba(79, 70, 229, 0.20);
+  --accent-glow: rgba(79, 70, 229, 0.05);
+
+  /* ── Warm accent — Amber ── */
+  --warm: #d97706;
+  --warm-hover: #b45309;
+  --warm-muted: rgba(217, 119, 6, 0.08);
+  --warm-border: rgba(217, 119, 6, 0.15);
+
+  /* ── Semantic ── */
+  --success: #16a34a;
+  --success-muted: rgba(22, 163, 74, 0.08);
+  --success-border: rgba(22, 163, 74, 0.20);
+
+  --warning: #ca8a04;
+  --warning-muted: rgba(202, 138, 4, 0.08);
+  --warning-border: rgba(202, 138, 4, 0.20);
+
+  --error: #dc2626;
+  --error-muted: rgba(220, 38, 38, 0.08);
+  --error-border: rgba(220, 38, 38, 0.20);
+
+  --info: #2563eb;
+  --info-muted: rgba(37, 99, 235, 0.08);
+  --info-border: rgba(37, 99, 235, 0.20);
+
+  /* ── Borders & Dividers ── */
+  --border-subtle: rgba(0, 0, 0, 0.05);
+  --border-default: rgba(0, 0, 0, 0.10);
+  --border-strong: rgba(0, 0, 0, 0.16);
+  --border-focus: var(--accent);
+  --divider: rgba(0, 0, 0, 0.06);
+
+  /* ── Message backgrounds (compat) ── */
+  --bg-message-user: #eef0ff;
+  --bg-message-agent: #f5f5f5;
+}

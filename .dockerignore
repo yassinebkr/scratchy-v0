@@ -1,0 +1,13 @@
+node_modules/
+src-tauri/
+.git/
+.gitignore
+*.md
+!README.md
+.env
+.env.*
+config.local.js
+web/js/config.local.js
+*.log
+.DS_Store
+nohup.out

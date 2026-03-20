@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Scratchy</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0a0a0a">
+
+  <!-- iOS standalone web app -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Scratchy">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+
+  <!-- Geist font family -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/geist@1.3.1/dist/fonts/geist-sans/style.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/geist@1.3.1/dist/fonts/geist-mono/style.min.css">
+
+  <link rel="stylesheet" href="css/style.css?v=20260316b">
+  <link rel="stylesheet" href="css/workspace.css?v=20260316b">
+  <link rel="stylesheet" href="css/version-toast.css">
+
+  <!-- Prism.js — syntax highlighting (Tomorrow Night theme) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+</head>
+<body>
+  <script>
+    // Bulletproof viewport height for iOS standalone PWA
+    // CSS 100vh/100dvh/100% all fail in various iOS PWA modes
+    (function(){
+      function setH(){ document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px'); }
+      setH();
+      window.addEventListener('resize', setH);
+      window.addEventListener('orientationchange', function(){ setTimeout(setH, 150); });
+    })();
+  </script>
+  <div id="app">
+    <!-- Header -->
+    <header id="header">
+      <div class="header-left">
+        <button id="sidebar-toggle" class="sidebar-toggle" title="Toggle sidebar">☰</button>
+        <span class="logo">🐱</span>
+        <h1>Scratchy</h1>
+      </div>
+      <div class="header-right">
+        <!-- View toggle removed in Phase 31 — unified conversation stream -->
+        <div id="view-toggle" class="view-toggle" style="display:none;">
+          <button id="view-chat-btn" class="view-toggle-btn active" data-view="chat">💬</button>
+          <button id="view-canvas-btn" class="view-toggle-btn" data-view="canvas">🖼</button>
+        </div>
+        <button id="cmd-palette-btn" class="reload-btn" title="Command palette (⌘K)" onclick="CommandPalette.open()" style="font-size:0.75rem;width:auto;padding:0 8px;border-radius:6px;">
+          <span class="kbd">⌘K</span>
+        </button>
+        <button id="reload-btn" class="reload-btn" title="Reload page">↻</button>
+        <span id="connection-status" class="status disconnected" title="Connection status"></span>
+      </div>
+      <!-- Hidden but still functional (controlled from sidebar settings) -->
+      <button id="auto-speech-toggle" class="auto-speech-toggle">🔇</button>
+      <button id="genui-toggle" class="genui-toggle" style="display:none;">✨ GenUI</button>
+      <button id="rust-toggle" class="rust-toggle" style="display:none;">🦀</button>
+      <!-- Context window meter — replaces border-bottom -->
+      <div class="context-meter" id="context-meter" role="meter" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Context usage" data-level="low">
+        <div class="context-meter__fill"></div>
+        <span class="context-meter__tooltip" id="context-meter-tooltip"></span>
+        <span class="context-meter__label" id="context-meter-label" data-visible="false">Reorganizing memory…</span>
+      </div>
+    </header>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-header">
+        <input id="sidebar-search" type="text" placeholder="Search messages..." autocomplete="off">
+      </div>
+      <div id="sidebar-sessions" class="sidebar-sessions"></div>
+      <div class="sidebar-footer">
+        <details class="sidebar-settings">
+          <summary class="sidebar-footer-link">📊 Benchmarks</summary>
+          <div class="sidebar-settings-panel">
+            <a href="/benchmarks.html" class="sidebar-footer-link">Light Benchmarks</a>
+            <a href="/benchmarks-heavy.html" class="sidebar-footer-link">Heavy Benchmarks</a>
+          </div>
+        </details>
+        <details class="sidebar-settings">
+          <summary class="sidebar-footer-link">⚙️ Settings</summary>
+          <div class="sidebar-settings-panel">
+            <button id="sidebar-genui-toggle" class="sidebar-setting-btn">✨ GenUI: <span id="genui-state">ON</span></button>
+            <button id="sidebar-speech-toggle" class="sidebar-setting-btn">🔊 Auto-speech: <span id="speech-state">OFF</span></button>
+            <button id="sidebar-theme-toggle" class="sidebar-setting-btn">🌙 Theme: <span id="theme-state">Dark</span></button>
+          </div>
+        </details>
+        <button id="sidebar-admin-btn" class="sidebar-setting-btn" style="display:none; width:100%; margin-top:4px;">🛡️ Admin Dashboard</button>
+        <button id="sidebar-account-btn" class="sidebar-setting-btn" style="display:none; width:100%; margin-top:4px;">👤 My Account</button>
+        <button id="sidebar-logout-btn" class="sidebar-setting-btn" style="display:none; width:100%; margin-top:8px; color:#ef4444;">🚪 Log Out</button>
+      </div>
+    </aside>
+    <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+
+    <!-- Tab Bar (Phase 32 — hidden until first pin) -->
+    <div id="workspace-tab-bar" class="tab-bar" role="tablist" aria-label="View">
+      <button class="tab-item" role="tab" aria-selected="true" aria-controls="chat-view" id="tab-chat" data-tab="chat">
+        💬 Chat
+      </button>
+      <button class="tab-item" role="tab" aria-selected="false" aria-controls="workspace-view" id="tab-workspace" data-tab="workspace">
+        📌 Workspace
+        <span class="tab-badge" id="workspace-badge" style="display:none;">0</span>
+      </button>
+    </div>
+
+    <!-- Unified Conversation View (Phase 31) -->
+    <div id="chat-view">
+      <!-- Pinned widgets dock -->
+      <div id="pinned-dock"></div>
+      <!-- Messages area — widgets render inline here as widget-region elements -->
+      <main id="messages" class="conversation-stream">
+        <div class="welcome-message loading-overlay">
+          <div class="loading-icon">🐱</div>
+          <div class="loading-spinner"></div>
+          <div class="loading-status">Connecting<span class="loading-dots"></span></div>
+          <div class="loading-detail"></div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Legacy canvas-view kept hidden for backward compat (widget routing still references canvas-grid) -->
+    <div id="canvas-view" style="display:none;">
+      <div class="canvas-viewport">
+        <div id="canvas-grid" class="canvas-grid" data-layout="auto" role="feed" aria-label="AI-generated components" aria-live="polite" aria-relevant="additions removals"></div>
+      </div>
+    </div>
+
+    <!-- Workspace View (Phase 32 — Pin to Workspace) -->
+    <div id="workspace-view" class="workspace-view" role="tabpanel" aria-labelledby="tab-workspace">
+      <div class="workspace-header">
+        <span class="workspace-header-title">Pinned Widgets</span>
+        <div class="workspace-header-actions">
+          <button class="wc-action" data-action="history" title="Canvas History" aria-label="Canvas history">🕐</button>
+        </div>
+      </div>
+      <div id="workspace-grid" class="workspace-grid" role="list" aria-label="Pinned widgets"></div>
+      <div id="workspace-empty" class="workspace-empty" style="display:none;">
+        <div class="workspace-empty-card">📌</div>
+        <div class="workspace-empty-title">No pinned widgets</div>
+        <div class="workspace-empty-desc">Pin widgets from chat to keep them visible here. Tap 📌 on any widget region in the conversation.</div>
+        <button class="workspace-empty-action" data-action="history">Browse History →</button>
+      </div>
+      <div id="workspace-history-panel" class="workspace-history-panel"></div>
+    </div>
+
+    <!-- Rust Command Panel (only visible in Tauri) -->
+    <div id="rust-panel" style="display:none;">
+      <div class="rust-panel-header">
+        <span>🦀 Rust Commands</span>
+        <button id="rust-panel-close">✕</button>
+      </div>
+      <div class="rust-panel-body">
+        <button class="rust-cmd" data-cmd="greet" data-args='{"name":"User"}'>greet("User")</button>
+        <button class="rust-cmd" data-cmd="get_app_info" data-args="{}">get_app_info()</button>
+        <button class="rust-cmd" data-cmd="calculate" data-args='{"a":42,"b":7,"operation":"multiply"}'>calculate(42 × 7)</button>
+        <button class="rust-cmd" data-cmd="reverse_text" data-args='{"text":"Scratchy"}'>reverse_text("Scratchy")</button>
+        <div id="rust-result" class="rust-result"></div>
+      </div>
+    </div>
+
+    <!-- Input area -->
+    <footer id="input-area">
+      <div id="attachment-preview" class="attachment-preview" style="display:none;"></div>
+      <div class="input-row">
+        <input type="file" id="file-input" accept="image/*,.pdf,.txt,.md,.csv,.py,.js,.json,.rs,.yaml,.yml,.xml,.zip" multiple style="display:none;">
+        <button id="attach-btn" class="attach-btn" title="Attach image" disabled>📎</button>
+        <button id="mic-btn" class="mic-btn" title="Record voice note" disabled>🎤</button>
+        <textarea 
+          id="message-input" 
+          placeholder="Type a message..." 
+          rows="1"
+          disabled
+        ></textarea>
+        <button id="send-btn" disabled aria-label="Send"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></button>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Toast notification container (Phase 31) -->
+  <div id="toast-container"></div>
+  <!-- Focus overlay container (Phase 31 — expanded widgets render here) -->
+  <div id="focus-overlay-root"></div>
+  <!-- Screen reader announcer (visually hidden) -->
+  <div id="sr-announcer" role="status" aria-live="polite" class="sr-only"></div>
+
+  <!-- Global error handler -->
+  <script>
+    window.onerror = function(msg, url, line, col) {
+      var el = document.createElement("div");
+      el.style.cssText = "position:fixed;top:0;left:0;right:0;background:red;color:white;padding:8px;z-index:99999;font:12px monospace;word-break:break-all";
+      el.textContent = msg + " @ " + (url||"").split("/").pop() + ":" + line + ":" + col;
+      document.body.appendChild(el);
+      setTimeout(function(){ el.remove(); }, 15000);
+    };
+  </script>
+
+  <!-- Config: defaults first, then local overrides (gitignored) -->
+  <script src="js/config.js?v=20260316b"></script>
+  <script src="js/config.local.js" onerror="console.warn('[Scratchy] No config.local.js — using defaults. Copy config.local.example.js to config.local.js')"></script>
+
+  <script src="js/live-components.js?v=20260316b"></script>
+  <script src="js/music-components.js?v=20260316b"></script>
+  <script src="js/smart-widget-runtime.js?v=20260316b"></script>
+  <script src="js/web-worker-runtime.js?v=20260316b"></script>
+  <!-- removed: widget-security-manager.js (dead code, syntax errors) -->
+  <script src="js/enhanced-smart-widget-runtime.js?v=20260316b"></script>
+  <!-- Simple Direct Widget Routing - NO OVER-ENGINEERING -->
+  <!-- removed: simple-widget-router.js (Node.js code, not browser-compatible) -->
+  <script src="js/canvas-state.js?v=20260316b"></script>
+  <script src="js/canvas-components.js?v=20260316b"></script>
+  <script src="js/data-model.js?v=20260316b"></script>
+  <script src="js/surface-manager.js?v=20260316b"></script>
+  <script src="js/ag-ui-handler.js?v=20260316b"></script>
+  <script src="js/surface-dom.js?v=20260316b"></script>
+  <script src="js/canvas-renderer.js?v=20260316b"></script>
+  <script src="js/components.js?v=20260316b"></script>
+  <script src="js/markdown.js?v=20260316b"></script>
+  <script src="js/md-file-viewer.js?v=20260316b"></script>
+  <script src="js/md-file-viewer-ui.js?v=20260316b"></script>
+  <script src="js/connection.js?v=20260316b"></script>
+  <script src="js/device-sync.js?v=20260316b"></script>
+  <script src="js/tts-stream.js?v=20260316b"></script>
+  <script src="js/tts-realtime.js?v=20260316b"></script>
+  <script src="js/messages.js?v=20260316b"></script>
+  <script src="js/messagestore.js?v=20260316b"></script>
+  <!-- removed: performance-measurement.js (unused) -->
+  <script src="js/command-palette.js?v=20260316b"></script>
+  <!-- mobile-sheet.js removed (Option A) — TODO: Phase N floating canvas pill (Option B) -->
+  <!-- <script src="js/mobile-sheet.js?v=20260316b"></script> -->
+  <script src="js/toon-parser.js?v=20260316b"></script>
+  <script src="js/toon-stream.js?v=20260316b"></script>
+  <script src="js/toon-integration.js?v=20260316b"></script>
+  <script src="js/toast.js?v=20260316b"></script>
+  <script src="js/shortcuts.js?v=20260316b"></script>
+  <script src="js/state/workspace-store.js?v=20260316b"></script>
+  <script src="js/ui/workspace-renderer.js?v=20260316b"></script>
+  <script src="js/ui/workspace-history.js?v=20260316b"></script>
+  <script src="js/app.js?v=20260316b"></script>
+  <!-- (diagnostic scripts removed — no longer needed) -->
+  <script src="js/tauri-bridge.js"></script>
+  <script src="js/version-check.js"></script>
+
+  <!-- Prism.js core + common languages -->
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-rust.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-toml.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-css.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-markup.min.js"></script>
+</body>
+</html>

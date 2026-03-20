@@ -1,0 +1,463 @@
+/**
+ * Canvas 2.0 Smart Widget Styles
+ * Responsive and modern styling for smart widgets
+ */
+
+/* Smart Widget Container */
+.smart-widget-container {
+  width: 100%;
+  background: var(--canvas-card-bg, #ffffff);
+  border: 1px solid var(--canvas-border, #e5e7eb);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.smart-widget-container:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Smart Widget Block Integration */
+.smart-widget-block {
+  margin: 8px 0;
+}
+
+.smart-widget-block.break-row {
+  width: 100%;
+  margin: 16px 0;
+}
+
+/* Loading States */
+.smart-widget-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: var(--canvas-text-secondary, #6b7280);
+  background: var(--canvas-bg-subtle, #f9fafb);
+}
+
+.smart-widget-loading .loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--canvas-border, #e5e7eb);
+  border-top: 2px solid var(--canvas-primary, #3b82f6);
+  border-radius: 50%;
+  margin-right: 12px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Error States */
+.smart-widget-error {
+  padding: 20px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  color: #dc2626;
+}
+
+.smart-widget-error h4 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.smart-widget-error p {
+  margin: 0 0 12px 0;
+  font-size: 13px;
+}
+
+.smart-widget-error details {
+  font-size: 11px;
+}
+
+.smart-widget-error summary {
+  cursor: pointer;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.smart-widget-error pre {
+  background: #ffffff;
+  padding: 8px;
+  border-radius: 4px;
+  overflow-x: auto;
+  font-size: 10px;
+  border: 1px solid #f3f4f6;
+}
+
+/* Base Widget Content Styles */
+.smart-widget {
+  width: 100%;
+  min-height: 60px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
+}
+
+.widget-header {
+  display: flex;
+  align-items: center;
+  justify-content: between;
+  padding: 16px 20px 12px 20px;
+  border-bottom: 1px solid var(--canvas-border, #e5e7eb);
+  background: var(--canvas-bg-subtle, #f9fafb);
+}
+
+.widget-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--canvas-text, #111827);
+  flex: 1;
+}
+
+.widget-header .notifications-count {
+  background: var(--canvas-primary, #3b82f6);
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+}
+
+.widget-body {
+  padding: 20px;
+}
+
+.widget-controls {
+  display: flex;
+  gap: 8px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--canvas-border, #e5e7eb);
+  background: var(--canvas-bg-subtle, #f9fafb);
+}
+
+.widget-controls button {
+  padding: 6px 12px;
+  border: 1px solid var(--canvas-border, #d1d5db);
+  background: white;
+  color: var(--canvas-text, #374151);
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.widget-controls button:hover {
+  background: var(--canvas-bg-subtle, #f3f4f6);
+  border-color: var(--canvas-primary, #3b82f6);
+}
+
+.widget-controls button:active {
+  transform: translateY(1px);
+}
+
+/* Specific Widget Types */
+
+/* Weather Widget */
+.weather-widget {
+  text-align: center;
+}
+
+.weather-widget .current-temp {
+  font-size: 48px;
+  font-weight: 300;
+  color: var(--canvas-primary, #3b82f6);
+  margin: 16px 0;
+  line-height: 1;
+}
+
+.weather-widget .forecast {
+  font-size: 16px;
+  color: var(--canvas-text-secondary, #6b7280);
+  margin-bottom: 20px;
+}
+
+/* Research Widget */
+.research-widget .search-interface {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.research-widget input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--canvas-border, #d1d5db);
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.research-widget input:focus {
+  outline: none;
+  border-color: var(--canvas-primary, #3b82f6);
+  box-shadow: 0 0 0 1px var(--canvas-primary, #3b82f6);
+}
+
+.research-widget button {
+  padding: 8px 16px;
+  background: var(--canvas-primary, #3b82f6);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.research-widget button:hover {
+  background: var(--canvas-primary-dark, #2563eb);
+}
+
+.active-searches {
+  margin-bottom: 16px;
+}
+
+.search-status {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--canvas-bg-subtle, #f3f4f6);
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.search-status .query {
+  flex: 1;
+  font-size: 13px;
+  color: var(--canvas-text-secondary, #6b7280);
+}
+
+.progress-indicator {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--canvas-border, #e5e7eb);
+  border-top: 2px solid var(--canvas-primary, #3b82f6);
+  border-radius: 50%;
+}
+
+.progress-indicator.spinning {
+  animation: spin 1s linear infinite;
+}
+
+.findings-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.finding-card {
+  padding: 12px;
+  border: 1px solid var(--canvas-border, #e5e7eb);
+  border-radius: 4px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.finding-card:hover {
+  border-color: var(--canvas-primary, #3b82f6);
+  background: var(--canvas-bg-subtle, #f8fafc);
+}
+
+.finding-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.finding-header .source {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--canvas-primary, #3b82f6);
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.finding-header .relevance {
+  font-size: 11px;
+  color: var(--canvas-text-secondary, #6b7280);
+}
+
+.finding-content h4 {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--canvas-text, #111827);
+}
+
+.finding-content p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--canvas-text-secondary, #6b7280);
+  line-height: 1.4;
+}
+
+/* Sports Widget */
+.sports-widget .games-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.game-card {
+  padding: 12px;
+  border: 1px solid var(--canvas-border, #e5e7eb);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.game-card:hover {
+  border-color: var(--canvas-primary, #3b82f6);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.game-card.live {
+  border-color: #10b981;
+  background: #ecfdf5;
+}
+
+.game-card .teams {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.game-card .team {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--canvas-text, #111827);
+}
+
+.game-card .score {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--canvas-primary, #3b82f6);
+}
+
+.game-card .game-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--canvas-text-secondary, #6b7280);
+}
+
+/* Toggle Switches */
+.toggle-switch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toggle-switch input[type="checkbox"] {
+  appearance: none;
+  width: 36px;
+  height: 20px;
+  background: var(--canvas-border, #d1d5db);
+  border-radius: 10px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.toggle-switch input[type="checkbox"]:checked {
+  background: var(--canvas-primary, #3b82f6);
+}
+
+.toggle-switch input[type="checkbox"]::before {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: white;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.2s ease;
+}
+
+.toggle-switch input[type="checkbox"]:checked::before {
+  transform: translateX(16px);
+}
+
+.toggle-switch label {
+  font-size: 13px;
+  color: var(--canvas-text, #374151);
+  cursor: pointer;
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .widget-header,
+  .widget-body,
+  .widget-controls {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  
+  .sports-widget .games-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .weather-widget .current-temp {
+    font-size: 36px;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .smart-widget-container {
+    background: var(--canvas-card-bg-dark, #1f2937);
+    border-color: var(--canvas-border-dark, #374151);
+  }
+  
+  .widget-header,
+  .widget-controls {
+    background: var(--canvas-bg-subtle-dark, #111827);
+    border-color: var(--canvas-border-dark, #374151);
+  }
+  
+  .smart-widget-loading {
+    background: var(--canvas-bg-subtle-dark, #111827);
+    color: var(--canvas-text-secondary-dark, #9ca3af);
+  }
+  
+  .widget-controls button {
+    background: var(--canvas-card-bg-dark, #1f2937);
+    border-color: var(--canvas-border-dark, #4b5563);
+    color: var(--canvas-text-dark, #f9fafb);
+  }
+  
+  .research-widget input {
+    background: var(--canvas-card-bg-dark, #1f2937);
+    border-color: var(--canvas-border-dark, #4b5563);
+    color: var(--canvas-text-dark, #f9fafb);
+  }
+}
+
+/* Animation keyframes */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.widget-loading-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

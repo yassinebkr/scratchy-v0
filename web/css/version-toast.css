@@ -1,0 +1,68 @@
+.version-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  z-index: 10000;
+  pointer-events: none;
+}
+
+.version-toast-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+}
+
+.version-toast-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: var(--bg-tertiary, #1e1e1e);
+  border: 1px solid var(--accent-border, rgba(99, 102, 241, 0.3));
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  font-family: 'Geist', -apple-system, sans-serif;
+  font-size: 0.9rem;
+  color: var(--text-primary, #ededed);
+}
+
+.version-toast-icon {
+  font-size: 1.2rem;
+}
+
+.version-toast-text {
+  white-space: nowrap;
+}
+
+.version-toast-btn {
+  padding: 6px 16px;
+  background: var(--accent, #6366f1);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: background 0.15s;
+}
+
+.version-toast-btn:hover {
+  background: var(--accent-hover, #818cf8);
+}
+
+.version-toast-close {
+  background: none;
+  border: none;
+  color: var(--text-tertiary, #555);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 4px;
+  line-height: 1;
+}
+
+.version-toast-close:hover {
+  color: var(--text-primary, #ededed);
+}

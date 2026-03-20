@@ -1,0 +1,658 @@
+# TOON Component Reference — Scratchy GenUI
+# ============================================
+# Include this in agent system prompts for token-efficient component docs.
+# Format: TOON (Token-Oriented Object Notation)
+# Each component block shows: type, fields (with types), and a minimal example.
+# ⚠️ markers flag common mistakes agents make.
+
+# ─── DISPLAY COMPONENTS ───────────────────────
+
+component: hero
+fields:
+  title: string
+  subtitle: string
+  icon: string (emoji or icon name)
+  badge: string
+  gradient: string (CSS gradient or preset)
+  style: string ("accent")
+example:
+  op: upsert
+  id: welcome-hero
+  type: hero
+  data:
+    title: Welcome Back
+    subtitle: Your dashboard is ready
+    icon: 👋
+    badge: New
+    style: accent
+
+---
+
+component: card
+fields:
+  title: string
+  text: string ⚠️ NOT body
+  icon: string
+example:
+  op: upsert
+  id: info-card
+  type: card
+  data:
+    title: Quick Tip
+    text: Use keyboard shortcuts to navigate faster
+    icon: 💡
+
+---
+
+component: alert
+fields:
+  title: string
+  message: string
+  severity: enum(info|warning|error|success)
+example:
+  op: upsert
+  id: sys-alert
+  type: alert
+  data:
+    title: Maintenance
+    message: Scheduled downtime at 02:00 UTC
+    severity: warning
+
+---
+
+component: status
+fields:
+  title: string
+  text: string
+  color: string
+example:
+  op: upsert
+  id: api-status
+  type: status
+  data:
+    title: API Gateway
+    text: Operational
+    color: green
+
+---
+
+component: weather
+fields:
+  icon: string (emoji)
+  city: string
+  temp: string
+  condition: string
+example:
+  op: upsert
+  id: weather-berlin
+  type: weather
+  data:
+    icon: ☀️
+    city: Berlin
+    temp: 22°C
+    condition: Sunny
+
+---
+
+component: code
+fields:
+  title: string
+  language: string
+  code: string
+example:
+  op: upsert
+  id: snippet-1
+  type: code
+  data:
+    title: Hello World
+    language: python
+    code: "print(\"hello world\")"
+
+---
+
+component: image
+fields:
+  title: string
+  src: string (url)
+  caption: string
+  alt: string
+example:
+  op: upsert
+  id: photo-1
+  type: image
+  data:
+    title: Architecture
+    src: https://example.com/diagram.png
+    caption: System overview
+    alt: Architecture diagram
+
+---
+
+component: video
+fields:
+  title: string
+  src: string (url)
+  caption: string
+example:
+  op: upsert
+  id: demo-vid
+  type: video
+  data:
+    title: Demo
+    src: https://example.com/demo.mp4
+    caption: Feature walkthrough
+
+---
+
+# ─── DATA / STATS COMPONENTS ─────────────────
+
+component: stats
+fields:
+  title: string
+  items: array[{label, value}]
+example:
+  op: upsert
+  id: srv-stats
+  type: stats
+  data:
+    title: Server Metrics
+    items[3]{label,value}:
+      Uptime,14d 3h
+      Requests,1.2M
+      Errors,0.03%
+
+---
+
+component: gauge
+fields:
+  label: string
+  value: number
+  max: number
+  unit: string
+  color: string
+example:
+  op: upsert
+  id: g-cpu
+  type: gauge
+  data:
+    label: CPU
+    value: 73
+    max: 100
+    unit: %
+    color: orange
+
+---
+
+component: progress
+fields:
+  label: string
+  value: number
+  max: number
+  icon: string
+  color: string
+example:
+  op: upsert
+  id: upload-prog
+  type: progress
+  data:
+    label: Upload
+    value: 64
+    max: 100
+    icon: 📤
+    color: blue
+
+---
+
+component: sparkline
+fields:
+  label: string
+  values: array[] (numbers)
+  color: string
+  endColor: string
+  trend: string
+example:
+  op: upsert
+  id: traffic-spark
+  type: sparkline
+  data:
+    label: Traffic
+    values[7]: 12,19,15,22,30,25,28
+    color: blue
+    trend: up
+
+---
+
+component: kv
+fields:
+  title: string
+  items: array[{key, value}]
+example:
+  op: upsert
+  id: sys-info
+  type: kv
+  data:
+    title: System Info
+    items[3]{key,value}:
+      OS,Ubuntu 24.04
+      Kernel,6.12.63
+      Node,v22.22.0
+
+---
+
+component: tags
+fields:
+  label: string
+  items: array[{text, color}]
+example:
+  op: upsert
+  id: skill-tags
+  type: tags
+  data:
+    label: Skills
+    items[3]{text,color}:
+      TypeScript,blue
+      Rust,orange
+      Python,green
+
+---
+
+component: streak
+fields:
+  title: string
+  days: array[] (strings — day labels)
+  active: array[] (booleans or indices) ⚠️ NOT current/best/dates
+example:
+  op: upsert
+  id: habit-streak
+  type: streak
+  data:
+    title: Coding Streak
+    days[7]: Mon,Tue,Wed,Thu,Fri,Sat,Sun
+    active[7]: true,true,true,true,false,true,true
+
+---
+
+# ─── CHART COMPONENTS ────────────────────────
+
+component: chart-bar
+fields:
+  title: string
+  labels: array[]
+  datasets: array[{label, data:[], color}] ⚠️ data NOT values
+example:
+  op: upsert
+  id: rev-bar
+  type: chart-bar
+  data:
+    title: Revenue
+    labels[3]: Jan,Feb,Mar
+    datasets[1]{label,data,color}:
+      Sales,"[120,150,180]",blue
+
+---
+
+component: chart-line
+fields:
+  title: string
+  labels: array[]
+  datasets: array[{label, data:[], color}]
+example:
+  op: upsert
+  id: perf-line
+  type: chart-line
+  data:
+    title: Performance
+    labels[4]: Q1,Q2,Q3,Q4
+    datasets[1]{label,data,color}:
+      Latency,"[45,38,42,35]",green
+
+---
+
+component: chart-pie
+fields:
+  title: string
+  slices: array[{label, value, color}]
+example:
+  op: upsert
+  id: lang-pie
+  type: chart-pie
+  data:
+    title: Languages
+    slices[3]{label,value,color}:
+      TypeScript,45,blue
+      Python,30,green
+      Rust,25,orange
+
+---
+
+component: stacked-bar
+fields:
+  title: string
+  items: array[{label, value, color}]
+example:
+  op: upsert
+  id: resource-bar
+  type: stacked-bar
+  data:
+    title: Resources
+    items[3]{label,value,color}:
+      Frontend,40,blue
+      Backend,35,green
+      Infra,25,gray
+
+---
+
+# ─── LIST / TABLE COMPONENTS ─────────────────
+
+component: table
+fields:
+  title: string
+  headers: array[]
+  rows: array[[]] (cells = strings or {text, action, context, style} for buttons)
+example:
+  op: upsert
+  id: task-table
+  type: table
+  data:
+    title: Tasks
+    headers[3]: Task,Status,Due
+    rows[3]:
+      Deploy API,In Progress,Feb 22
+      Fix auth bug,Blocked,Feb 23
+      Write docs,Done,Feb 21
+
+---
+
+component: checklist
+fields:
+  title: string
+  items: array[{text, checked}] ⚠️ text NOT label, checked NOT done
+example:
+  op: upsert
+  id: todo-list
+  type: checklist
+  data:
+    title: Sprint Tasks
+    items[3]{text,checked}:
+      Write tests,true
+      Code review,false
+      Deploy staging,false
+
+---
+
+component: timeline
+fields:
+  title: string
+  items: array[{title, text, date/time, icon, status}] ⚠️ NOT label/desc
+example:
+  op: upsert
+  id: deploy-tl
+  type: timeline
+  data:
+    title: Deployment
+    items[3]{title,text,time,icon,status}:
+      Build,Compiling source,10:00,🔨,done
+      Test,Running suite,10:15,🧪,active
+      Deploy,Push to prod,10:30,🚀,pending
+
+---
+
+component: accordion
+fields:
+  title: string
+  sections: array[{title, content}]
+example:
+  op: upsert
+  id: faq
+  type: accordion
+  data:
+    title: FAQ
+    sections[2]{title,content}:
+      How do I reset?,Go to Settings > Reset
+      Where are logs?,Check /var/log/app
+
+---
+
+component: tabs
+fields:
+  title: string
+  tabs: array[{label, content}] ⚠️ array is tabs NOT items
+  active: number (0-indexed)
+example:
+  op: upsert
+  id: config-tabs
+  type: tabs
+  data:
+    title: Configuration
+    active: 0
+    tabs[2]{label,content}:
+      General,Basic app settings
+      Advanced,Performance tuning options
+
+---
+
+# ─── INTERACTIVE COMPONENTS ──────────────────
+
+component: buttons
+fields:
+  title: string
+  buttons: array[{label, action, style, context}]
+example:
+  op: upsert
+  id: main-actions
+  type: buttons
+  data:
+    title: Actions
+    buttons[2]{label,action,style}:
+      Refresh,refresh,ghost
+      Deploy,deploy,primary
+
+---
+
+component: chips
+fields:
+  title: string (or label)
+  chips: array[{text, value, checked}] ⚠️ array is chips NOT items
+example:
+  op: upsert
+  id: filter-chips
+  type: chips
+  data:
+    label: Filter by
+    chips[3]{text,value,checked}:
+      Bug,bug,true
+      Feature,feature,false
+      Docs,docs,false
+
+---
+
+component: toggle
+fields:
+  label: string (or title)
+  checked: boolean (or value)
+example:
+  op: upsert
+  id: dark-mode
+  type: toggle
+  data:
+    label: Dark Mode
+    checked: true
+
+---
+
+component: input
+fields:
+  label: string
+  type: string (text|email|number|password)
+  placeholder: string
+  value: string
+example:
+  op: upsert
+  id: search-input
+  type: input
+  data:
+    label: Search
+    type: text
+    placeholder: Type to search...
+
+---
+
+component: slider
+fields:
+  label: string (or title)
+  value: number
+  min: number
+  max: number
+example:
+  op: upsert
+  id: vol-slider
+  type: slider
+  data:
+    label: Volume
+    value: 75
+    min: 0
+    max: 100
+
+---
+
+component: rating
+fields:
+  title: string
+  value: number
+  max: number
+example:
+  op: upsert
+  id: review-rating
+  type: rating
+  data:
+    title: Your Rating
+    value: 4
+    max: 5
+
+---
+
+# ─── FORM COMPONENTS ─────────────────────────
+
+component: form
+fields:
+  title: string
+  id: string (form identifier for submit callback)
+  fields: array[{name, type, label, value, options, placeholder}]
+  actions: array[{label, action, style}]
+notes: |
+  field types: text, email, number, richtext, textarea, select, toggle, file, date
+  add options:[] for select, placeholder for text inputs
+example:
+  op: upsert
+  id: contact-form
+  type: form
+  data:
+    title: Contact Us
+    id: contact
+    fields[3]{name,type,label,placeholder}:
+      name,text,Your Name,John Doe
+      email,email,Email,you@example.com
+      message,textarea,Message,Tell us more...
+    actions[2]{label,action,style}:
+      Send,submit,primary
+      Cancel,cancel,ghost
+
+---
+
+component: form-strip
+fields:
+  title: string
+  desc: string (or description)
+  icon: string
+  fields: array[{name, type, label, value}]
+  action: string
+  label: string
+example:
+  op: upsert
+  id: newsletter
+  type: form-strip
+  data:
+    title: Newsletter
+    desc: Get weekly updates
+    icon: 📧
+    fields[1]{name,type,label,placeholder}:
+      email,email,Email,you@example.com
+    action: subscribe
+    label: Subscribe
+
+---
+
+component: link-card
+fields:
+  title: string
+  desc: string (or description)
+  url: string
+  icon: string
+  color: string
+example:
+  op: upsert
+  id: docs-link
+  type: link-card
+  data:
+    title: Documentation
+    desc: Full API reference
+    url: https://docs.example.com
+    icon: 📚
+    color: blue
+
+---
+
+# ─── TOKEN SAVINGS: TOON vs JSON ─────────────
+#
+# Example: 3 gauges + 1 stats component
+#
+# JSON (scratchy-canvas) — ~185 tokens:
+# {"op":"upsert","id":"g-cpu","type":"gauge","data":{"label":"CPU","value":73,"max":100,"unit":"%","color":"orange"}}
+# {"op":"upsert","id":"g-ram","type":"gauge","data":{"label":"RAM","value":4.2,"max":8,"unit":"GB","color":"blue"}}
+# {"op":"upsert","id":"g-disk","type":"gauge","data":{"label":"Disk","value":52,"max":100,"unit":"%","color":"green"}}
+# {"op":"upsert","id":"srv-stats","type":"stats","data":{"title":"Services","items":[{"label":"Uptime","value":"14d 3h"},{"label":"Requests","value":"1.2M"},{"label":"Errors","value":"0.03%"}]}}
+#
+# TOON (scratchy-toon) — ~110 tokens (40% savings):
+# (see gauge and stats examples above)
+#
+# Savings are highest with:
+#   - Tabular arrays (stats, table, checklist, timeline, charts)
+#   - Multiple components in one block
+#   - Components with many fields
+#
+# Savings are lowest with:
+#   - Single simple components (toggle, rating)
+#   - Patch ops (already small in JSON)
+#
+# ─── OPS REFERENCE ────────────────────────────
+#
+# upsert — create or fully replace
+#   op: upsert
+#   id: my-comp
+#   type: card
+#   data:
+#     title: Hello
+#
+# patch — merge into existing data
+#   op: patch
+#   id: my-comp
+#   data:
+#     title: Updated Title
+#
+# remove — delete component
+#   op: remove
+#   id: my-comp
+#
+# clear — remove all components
+#   op: clear
+#
+# layout — change canvas layout
+#   op: layout
+#   mode: dashboard
+#
+# move — reposition component
+#   op: move
+#   id: my-comp
+#   layout:
+#     zone: top
+#     order: 0

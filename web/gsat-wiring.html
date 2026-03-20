@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GSAT Motor Control — Wiring Diagram</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a0a0f; color: #e0e0e0; font-family: 'SF Mono', 'Fira Code', monospace; padding: 20px; }
+  h1 { text-align: center; font-size: 1.3em; color: #818cf8; margin-bottom: 8px; }
+  .subtitle { text-align: center; font-size: 0.8em; color: #666; margin-bottom: 24px; }
+  svg { width: 100%; max-width: 960px; margin: 0 auto; display: block; }
+  .pin-table { margin: 24px auto; border-collapse: collapse; font-size: 0.75em; }
+  .pin-table th { background: #1e1e2e; color: #818cf8; padding: 6px 12px; text-align: left; }
+  .pin-table td { padding: 5px 12px; border-bottom: 1px solid #1a1a2a; }
+  .pin-table tr:nth-child(even) td { background: #0f0f1a; }
+  .notes { max-width: 700px; margin: 20px auto; font-size: 0.75em; color: #888; line-height: 1.6; }
+  .notes strong { color: #f59e0b; }
+  .notes li { margin: 4px 0; }
+</style>
+</head>
+<body>
+<h1>GSAT Motor Control — Wiring Diagram</h1>
+<p class="subtitle">ESP32-C3 Super Mini · 2× IBT-2 (BTS7960) · 2× GA36Y-555 w/ Encoder</p>
+
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arrow-red" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto">
+      <path d="M0,0 L6,2 L0,4" fill="#ef4444"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto">
+      <path d="M0,0 L6,2 L0,4" fill="#22c55e"/>
+    </marker>
+    <marker id="arrow-cyan" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto">
+      <path d="M0,0 L6,2 L0,4" fill="#06b6d4"/>
+    </marker>
+    <marker id="arrow-purple" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto">
+      <path d="M0,0 L6,2 L0,4" fill="#a855f7"/>
+    </marker>
+    <marker id="arrow-blue" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto">
+      <path d="M0,0 L6,2 L0,4" fill="#818cf8"/>
+    </marker>
+  </defs>
+
+  <!-- ==================== ROW 1: AZIMUTH (y=30..230) ==================== -->
+
+  <!-- Motor 1 (Azimuth) -->
+  <circle cx="60" cy="130" r="35" fill="#1a1a2e" stroke="#818cf8" stroke-width="2"/>
+  <text x="60" y="122" text-anchor="middle" font-family="monospace" font-size="13" fill="#fff" font-weight="bold">M1</text>
+  <text x="60" y="138" text-anchor="middle" font-family="monospace" font-size="10" fill="#818cf8">AZ</text>
+  <text x="60" y="152" text-anchor="middle" font-family="monospace" font-size="8" fill="#555">GA36Y-555</text>
+  <!-- M+ / M- labels on motor -->
+  <text x="98" y="118" font-family="monospace" font-size="8" fill="#818cf8">M+</text>
+  <text x="98" y="148" font-family="monospace" font-size="8" fill="#818cf8">M-</text>
+
+  <!-- Wires: Motor 1 → IBT-2 #1 -->
+  <line x1="95" y1="118" x2="170" y2="118" stroke="#818cf8" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <line x1="95" y1="145" x2="170" y2="145" stroke="#818cf8" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+
+  <!-- IBT-2 #1 (Azimuth) -->
+  <rect x="170" y="50" width="200" height="180" fill="#111122" stroke="#f59e0b" stroke-width="1.5" rx="6"/>
+  <text x="270" y="74" text-anchor="middle" font-family="monospace" font-size="12" fill="#fff" font-weight="bold">IBT-2 #1 (BTS7960)</text>
+  <text x="270" y="90" text-anchor="middle" font-family="monospace" font-size="10" fill="#f59e0b">AZIMUTH</text>
+  <!-- Left pins -->
+  <circle cx="170" cy="118" r="3" fill="#818cf8"/>
+  <text x="178" y="121" font-family="monospace" font-size="9" fill="#aaa">M+</text>
+  <circle cx="170" cy="145" r="3" fill="#818cf8"/>
+  <text x="178" y="148" font-family="monospace" font-size="9" fill="#aaa">M-</text>
+  <!-- Right pins -->
+  <circle cx="370" cy="108" r="3" fill="#ef4444"/>
+  <text x="338" y="111" font-family="monospace" font-size="9" fill="#aaa">B+</text>
+  <circle cx="370" cy="128" r="3" fill="#666"/>
+  <text x="338" y="131" font-family="monospace" font-size="9" fill="#aaa">B-</text>
+  <!-- Control pins (bottom) -->
+  <circle cx="370" cy="155" r="3" fill="#22c55e"/>
+  <text x="325" y="158" font-family="monospace" font-size="9" fill="#aaa">RPWM</text>
+  <circle cx="370" cy="172" r="3" fill="#22c55e"/>
+  <text x="325" y="175" font-family="monospace" font-size="9" fill="#aaa">LPWM</text>
+  <circle cx="370" cy="192" r="3" fill="#a855f7"/>
+  <text x="332" y="195" font-family="monospace" font-size="9" fill="#aaa">R_IS</text>
+  <!-- Tied pins (inside box) -->
+  <text x="185" y="178" font-family="monospace" font-size="8" fill="#555">R_EN, L_EN → 3.3V (tied)</text>
+  <text x="185" y="192" font-family="monospace" font-size="8" fill="#555">VCC → 3.3V | GND → GND</text>
+  <!-- 100µF cap -->
+  <rect x="372" y="100" width="18" height="10" fill="none" stroke="#f59e0b" stroke-width="1" rx="2"/>
+  <text x="393" y="109" font-family="monospace" font-size="7" fill="#f59e0b">100µF</text>
+
+  <!-- ==================== ROW 2: ELEVATION (y=290..490) ==================== -->
+
+  <!-- Motor 2 (Elevation) -->
+  <circle cx="60" cy="400" r="35" fill="#1a1a2e" stroke="#818cf8" stroke-width="2"/>
+  <text x="60" y="392" text-anchor="middle" font-family="monospace" font-size="13" fill="#fff" font-weight="bold">M2</text>
+  <text x="60" y="408" text-anchor="middle" font-family="monospace" font-size="10" fill="#818cf8">EL</text>
+  <text x="60" y="422" text-anchor="middle" font-family="monospace" font-size="8" fill="#555">GA36Y-555</text>
+  <text x="98" y="388" font-family="monospace" font-size="8" fill="#818cf8">M+</text>
+  <text x="98" y="418" font-family="monospace" font-size="8" fill="#818cf8">M-</text>
+
+  <!-- Wires: Motor 2 → IBT-2 #2 -->
+  <line x1="95" y1="388" x2="170" y2="388" stroke="#818cf8" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <line x1="95" y1="415" x2="170" y2="415" stroke="#818cf8" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+
+  <!-- IBT-2 #2 (Elevation) -->
+  <rect x="170" y="320" width="200" height="180" fill="#111122" stroke="#f59e0b" stroke-width="1.5" rx="6"/>
+  <text x="270" y="344" text-anchor="middle" font-family="monospace" font-size="12" fill="#fff" font-weight="bold">IBT-2 #2 (BTS7960)</text>
+  <text x="270" y="360" text-anchor="middle" font-family="monospace" font-size="10" fill="#f59e0b">ELEVATION</text>
+  <!-- Left pins -->
+  <circle cx="170" cy="388" r="3" fill="#818cf8"/>
+  <text x="178" y="391" font-family="monospace" font-size="9" fill="#aaa">M+</text>
+  <circle cx="170" cy="415" r="3" fill="#818cf8"/>
+  <text x="178" y="418" font-family="monospace" font-size="9" fill="#aaa">M-</text>
+  <!-- Right pins -->
+  <circle cx="370" cy="378" r="3" fill="#ef4444"/>
+  <text x="338" y="381" font-family="monospace" font-size="9" fill="#aaa">B+</text>
+  <circle cx="370" cy="398" r="3" fill="#666"/>
+  <text x="338" y="401" font-family="monospace" font-size="9" fill="#aaa">B-</text>
+  <!-- Control pins -->
+  <circle cx="370" cy="425" r="3" fill="#22c55e"/>
+  <text x="325" y="428" font-family="monospace" font-size="9" fill="#aaa">RPWM</text>
+  <circle cx="370" cy="442" r="3" fill="#22c55e"/>
+  <text x="325" y="445" font-family="monospace" font-size="9" fill="#aaa">LPWM</text>
+  <circle cx="370" cy="462" r="3" fill="#a855f7"/>
+  <text x="332" y="465" font-family="monospace" font-size="9" fill="#aaa">R_IS</text>
+  <!-- Tied pins -->
+  <text x="185" y="448" font-family="monospace" font-size="8" fill="#555">R_EN, L_EN → 3.3V (tied)</text>
+  <text x="185" y="462" font-family="monospace" font-size="8" fill="#555">VCC → 3.3V | GND → GND</text>
+  <!-- 100µF cap -->
+  <rect x="372" y="370" width="18" height="10" fill="none" stroke="#f59e0b" stroke-width="1" rx="2"/>
+  <text x="393" y="379" font-family="monospace" font-size="7" fill="#f59e0b">100µF</text>
+
+  <!-- ==================== PSU (far right) ==================== -->
+  <rect x="440" y="90" width="80" height="100" fill="#1a1a2e" stroke="#ef4444" stroke-width="2" rx="6"/>
+  <text x="480" y="118" text-anchor="middle" font-family="monospace" font-size="11" fill="#fff" font-weight="bold">12V</text>
+  <text x="480" y="133" text-anchor="middle" font-family="monospace" font-size="11" fill="#fff" font-weight="bold">PSU</text>
+  <text x="480" y="150" text-anchor="middle" font-family="monospace" font-size="9" fill="#ef4444">≥ 5A</text>
+  <text x="480" y="166" text-anchor="middle" font-family="monospace" font-size="8" fill="#666">B+ red</text>
+  <text x="480" y="178" text-anchor="middle" font-family="monospace" font-size="8" fill="#666">B- black</text>
+
+  <!-- PSU → IBT-2 #1 (power) -->
+  <path d="M440,120 L425,120 L425,108 L373,108" stroke="#ef4444" stroke-width="2" fill="none" marker-end="url(#arrow-red)"/>
+  <path d="M440,155 L430,155 L430,128 L373,128" stroke="#666" stroke-width="1.5" fill="none" stroke-dasharray="5,3"/>
+
+  <!-- PSU → IBT-2 #2 (power) -->
+  <path d="M480,190 L480,280 L425,280 L425,378 L373,378" stroke="#ef4444" stroke-width="2" fill="none" marker-end="url(#arrow-red)"/>
+  <path d="M475,190 L475,275 L430,275 L430,398 L373,398" stroke="#666" stroke-width="1.5" fill="none" stroke-dasharray="5,3"/>
+
+  <!-- ==================== ESP32-C3 (center) ==================== -->
+  <rect x="530" y="200" width="160" height="240" fill="#111122" stroke="#22c55e" stroke-width="2" rx="8"/>
+  <text x="610" y="228" text-anchor="middle" font-family="monospace" font-size="12" fill="#fff" font-weight="bold">ESP32-C3</text>
+  <text x="610" y="244" text-anchor="middle" font-family="monospace" font-size="10" fill="#22c55e">Super Mini</text>
+
+  <!-- Left side pins (to drivers) -->
+  <circle cx="530" cy="275" r="3" fill="#22c55e"/>
+  <text x="540" y="278" font-family="monospace" font-size="9" fill="#22c55e">GPIO10</text>
+  <circle cx="530" cy="295" r="3" fill="#22c55e"/>
+  <text x="540" y="298" font-family="monospace" font-size="9" fill="#22c55e">GPIO3</text>
+  <circle cx="530" cy="320" r="3" fill="#22c55e"/>
+  <text x="540" y="323" font-family="monospace" font-size="9" fill="#22c55e">GPIO6</text>
+  <circle cx="530" cy="340" r="3" fill="#22c55e"/>
+  <text x="540" y="343" font-family="monospace" font-size="9" fill="#22c55e">GPIO7</text>
+  <circle cx="530" cy="370" r="3" fill="#a855f7"/>
+  <text x="540" y="373" font-family="monospace" font-size="9" fill="#a855f7">GPIO0</text>
+  <circle cx="530" cy="390" r="3" fill="#a855f7"/>
+  <text x="540" y="393" font-family="monospace" font-size="9" fill="#a855f7">GPIO1</text>
+
+  <!-- Right side pins (encoders) -->
+  <circle cx="690" cy="275" r="3" fill="#06b6d4"/>
+  <text x="645" y="278" font-family="monospace" font-size="9" fill="#06b6d4">GPIO5</text>
+  <circle cx="690" cy="295" r="3" fill="#06b6d4"/>
+  <text x="641" y="298" font-family="monospace" font-size="9" fill="#06b6d4">GPIO20</text>
+  <circle cx="690" cy="320" r="3" fill="#06b6d4"/>
+  <text x="641" y="323" font-family="monospace" font-size="9" fill="#06b6d4">GPIO21</text>
+  <circle cx="690" cy="340" r="3" fill="#06b6d4"/>
+  <text x="645" y="343" font-family="monospace" font-size="9" fill="#06b6d4">GPIO4</text>
+
+  <!-- USB-C -->
+  <rect x="585" y="420" width="50" height="14" fill="#222" stroke="#22c55e" stroke-width="1" rx="3"/>
+  <text x="610" y="430" text-anchor="middle" font-family="monospace" font-size="7" fill="#22c55e">USB-C</text>
+
+  <!-- ==================== SIGNAL WIRES: ESP → IBT-2 #1 ==================== -->
+  <!-- GPIO10 → RPWM #1 -->
+  <path d="M527,275 L500,275 L500,200 L435,200 L435,155 L373,155" stroke="#22c55e" stroke-width="1.5" fill="none" marker-end="url(#arrow-green)"/>
+  <text x="405" y="152" font-family="monospace" font-size="7" fill="#22c55e">GPIO10</text>
+
+  <!-- GPIO3 → LPWM #1 -->
+  <path d="M527,295 L505,295 L505,210 L440,210 L440,172 L373,172" stroke="#22c55e" stroke-width="1.5" fill="none" marker-end="url(#arrow-green)"/>
+  <text x="408" y="169" font-family="monospace" font-size="7" fill="#22c55e">GPIO3</text>
+
+  <!-- ==================== SIGNAL WIRES: ESP → IBT-2 #2 ==================== -->
+  <!-- GPIO6 → RPWM #2 -->
+  <path d="M527,320 L505,320 L505,380 L440,380 L440,425 L373,425" stroke="#22c55e" stroke-width="1.5" fill="none" marker-end="url(#arrow-green)"/>
+  <text x="405" y="422" font-family="monospace" font-size="7" fill="#22c55e">GPIO6</text>
+
+  <!-- GPIO7 → LPWM #2 -->
+  <path d="M527,340 L500,340 L500,390 L435,390 L435,442 L373,442" stroke="#22c55e" stroke-width="1.5" fill="none" marker-end="url(#arrow-green)"/>
+  <text x="405" y="439" font-family="monospace" font-size="7" fill="#22c55e">GPIO7</text>
+
+  <!-- ==================== ADC WIRES ==================== -->
+  <!-- GPIO0 ← IS #1 -->
+  <path d="M527,370 L510,370 L510,220 L445,220 L445,192 L373,192" stroke="#a855f7" stroke-width="1.2" fill="none" stroke-dasharray="4,2" marker-end="url(#arrow-purple)"/>
+  <text x="405" y="205" font-family="monospace" font-size="7" fill="#a855f7">→ GPIO0</text>
+
+  <!-- GPIO1 ← IS #2 -->
+  <path d="M527,390 L515,390 L515,475 L445,475 L445,462 L373,462" stroke="#a855f7" stroke-width="1.2" fill="none" stroke-dasharray="4,2" marker-end="url(#arrow-purple)"/>
+  <text x="405" y="474" font-family="monospace" font-size="7" fill="#a855f7">→ GPIO1</text>
+
+  <!-- ==================== ENCODERS ==================== -->
+  <!-- Encoder 1 (AZ) -->
+  <rect x="770" y="245" width="140" height="80" fill="#111122" stroke="#06b6d4" stroke-width="1.5" rx="5"/>
+  <text x="840" y="267" text-anchor="middle" font-family="monospace" font-size="11" fill="#fff" font-weight="bold">ENCODER 1</text>
+  <text x="840" y="281" text-anchor="middle" font-family="monospace" font-size="9" fill="#06b6d4">AZ · 16PPR · XH2.54</text>
+  <circle cx="770" cy="300" r="3" fill="#06b6d4"/>
+  <text x="778" y="303" font-family="monospace" font-size="8" fill="#aaa">A</text>
+  <circle cx="770" cy="315" r="3" fill="#06b6d4"/>
+  <text x="778" y="318" font-family="monospace" font-size="8" fill="#aaa">B</text>
+  <text x="870" y="303" font-family="monospace" font-size="8" fill="#555">3.3V</text>
+  <text x="870" y="318" font-family="monospace" font-size="8" fill="#555">GND</text>
+  <text x="920" y="290" font-family="monospace" font-size="7" fill="#06b6d4">100nF</text>
+
+  <!-- Encoder 2 (EL) -->
+  <rect x="770" y="340" width="140" height="80" fill="#111122" stroke="#06b6d4" stroke-width="1.5" rx="5"/>
+  <text x="840" y="362" text-anchor="middle" font-family="monospace" font-size="11" fill="#fff" font-weight="bold">ENCODER 2</text>
+  <text x="840" y="376" text-anchor="middle" font-family="monospace" font-size="9" fill="#06b6d4">EL · 16PPR · XH2.54</text>
+  <circle cx="770" cy="395" r="3" fill="#06b6d4"/>
+  <text x="778" y="398" font-family="monospace" font-size="8" fill="#aaa">A</text>
+  <circle cx="770" cy="410" r="3" fill="#06b6d4"/>
+  <text x="778" y="413" font-family="monospace" font-size="8" fill="#aaa">B</text>
+  <text x="870" y="398" font-family="monospace" font-size="8" fill="#555">3.3V</text>
+  <text x="870" y="413" font-family="monospace" font-size="8" fill="#555">GND</text>
+  <text x="920" y="385" font-family="monospace" font-size="7" fill="#06b6d4">100nF</text>
+
+  <!-- Encoder wires -->
+  <!-- GPIO5 → ENC1 A -->
+  <path d="M693,275 L730,275 L730,300 L767,300" stroke="#06b6d4" stroke-width="1.3" fill="none" marker-end="url(#arrow-cyan)"/>
+  <!-- GPIO20 → ENC1 B -->
+  <path d="M693,295 L740,295 L740,315 L767,315" stroke="#06b6d4" stroke-width="1.3" fill="none" marker-end="url(#arrow-cyan)"/>
+  <!-- GPIO21 → ENC2 A -->
+  <path d="M693,320 L740,320 L740,395 L767,395" stroke="#06b6d4" stroke-width="1.3" fill="none" marker-end="url(#arrow-cyan)"/>
+  <!-- GPIO4 → ENC2 B -->
+  <path d="M693,340 L730,340 L730,410 L767,410" stroke="#06b6d4" stroke-width="1.3" fill="none" marker-end="url(#arrow-cyan)"/>
+
+  <!-- ==================== GND BUS ==================== -->
+  <line x1="40" y1="555" x2="920" y2="555" stroke="#444" stroke-width="2.5"/>
+  <text x="480" y="575" text-anchor="middle" font-family="monospace" font-size="10" fill="#666">━ COMMON GND BUS ━  (ESP32 + IBT-2s + PSU + Encoders)</text>
+  <!-- GND drops -->
+  <line x1="270" y1="500" x2="270" y2="555" stroke="#666" stroke-width="1" stroke-dasharray="4,2"/>
+  <line x1="270" y1="230" x2="270" y2="240" stroke="#666" stroke-width="1" stroke-dasharray="4,2"/>
+  <text x="275" y="248" font-family="monospace" font-size="7" fill="#666">GND</text>
+  <line x1="610" y1="434" x2="610" y2="555" stroke="#666" stroke-width="1" stroke-dasharray="4,2"/>
+  <line x1="840" y1="325" x2="840" y2="332" stroke="#666" stroke-width="1" stroke-dasharray="4,2"/>
+  <line x1="840" y1="420" x2="840" y2="555" stroke="#666" stroke-width="1" stroke-dasharray="4,2"/>
+
+  <!-- ==================== LEGEND ==================== -->
+  <rect x="30" y="520" width="900" height="24" fill="#0a0a0f" rx="4"/>
+  <line x1="60" y1="532" x2="90" y2="532" stroke="#ef4444" stroke-width="2"/>
+  <text x="95" y="536" font-family="monospace" font-size="9" fill="#999">12V Power</text>
+  <line x1="200" y1="532" x2="230" y2="532" stroke="#22c55e" stroke-width="2"/>
+  <text x="235" y="536" font-family="monospace" font-size="9" fill="#999">PWM Signal</text>
+  <line x1="350" y1="532" x2="380" y2="532" stroke="#06b6d4" stroke-width="2"/>
+  <text x="385" y="536" font-family="monospace" font-size="9" fill="#999">Encoder</text>
+  <line x1="480" y1="532" x2="510" y2="532" stroke="#a855f7" stroke-width="1.5" stroke-dasharray="4,2"/>
+  <text x="515" y="536" font-family="monospace" font-size="9" fill="#999">ADC (Current)</text>
+  <line x1="640" y1="532" x2="670" y2="532" stroke="#818cf8" stroke-width="2"/>
+  <text x="675" y="536" font-family="monospace" font-size="9" fill="#999">Motor Out</text>
+  <line x1="780" y1="532" x2="810" y2="532" stroke="#666" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <text x="815" y="536" font-family="monospace" font-size="9" fill="#999">GND</text>
+</svg>
+
+<table class="pin-table">
+  <tr><th>Function</th><th>GPIO</th><th>Dir</th><th>Wire Color</th><th>Notes</th></tr>
+  <tr><td>AZ Motor RPWM</td><td>10</td><td>→ OUT</td><td style="color:#22c55e">green</td><td>IBT-2 #1 forward drive</td></tr>
+  <tr><td>AZ Motor LPWM</td><td>3</td><td>→ OUT</td><td style="color:#22c55e">green</td><td>IBT-2 #1 reverse drive</td></tr>
+  <tr><td>EL Motor RPWM</td><td>6</td><td>→ OUT</td><td style="color:#22c55e">green</td><td>IBT-2 #2 forward drive</td></tr>
+  <tr><td>EL Motor LPWM</td><td>7</td><td>→ OUT</td><td style="color:#22c55e">green</td><td>IBT-2 #2 reverse drive</td></tr>
+  <tr><td>AZ Encoder A</td><td>5</td><td>← IN</td><td style="color:#06b6d4">cyan</td><td>Quadrature interrupt</td></tr>
+  <tr><td>AZ Encoder B</td><td>20</td><td>← IN</td><td style="color:#06b6d4">cyan</td><td>Quadrature interrupt</td></tr>
+  <tr><td>EL Encoder A</td><td>21</td><td>← IN</td><td style="color:#06b6d4">cyan</td><td>Quadrature interrupt</td></tr>
+  <tr><td>EL Encoder B</td><td>4</td><td>← IN</td><td style="color:#06b6d4">cyan</td><td>Quadrature interrupt</td></tr>
+  <tr><td>AZ Current Sense</td><td>0</td><td>← ADC</td><td style="color:#a855f7">purple</td><td>ACS712 or IBT-2 IS</td></tr>
+  <tr><td>EL Current Sense</td><td>1</td><td>← ADC</td><td style="color:#a855f7">purple</td><td>ACS712 or IBT-2 IS</td></tr>
+</table>
+
+<div class="notes">
+  <strong>⚡ Critical Notes:</strong>
+  <ul>
+    <li><strong>IBT-2 R_EN + L_EN</strong> → tied to 3.3V (always enabled). Saves 4 GPIO.</li>
+    <li><strong>Encoder power</strong> → 3.3V from ESP32 (encoder supports 3.3V/5V)</li>
+    <li><strong>PSU</strong> → 12V, minimum 5A (handles 2× 11A stall with headroom)</li>
+    <li><strong>Decoupling</strong> → 100µF electrolytic near each IBT-2 B+, 100nF ceramic near each encoder VCC</li>
+    <li><strong>BTS7960 IS pin</strong> → 8500:1 ratio ≈ 13mV at 11A stall (too weak for ESP32 ADC). Use <strong>ACS712-20A</strong> (€1-2) for reliable sensing, or software-limit PWM to 60-70%.</li>
+    <li><strong>All GNDs must be common</strong> — ESP32, IBT-2s, PSU, encoders on one bus.</li>
+    <li><strong>Encoder resolution</strong> → 16 PPR × 4 (quadrature) × gear ratio = counts/rev</li>
+    <li><strong>IBT-2 control</strong> → Forward: RPWM=PWM, LPWM=LOW · Reverse: RPWM=LOW, LPWM=PWM · Brake: both HIGH</li>
+  </ul>
+</div>
+</body>
+</html>
