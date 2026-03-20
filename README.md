@@ -2,7 +2,9 @@
 
 > ⚠️ **This is an archived codebase.** Active development continues at [yassinebkr/scratchy](https://github.com/yassinebkr/scratchy).
 
-The original Generative UI webchat client for [OpenClaw](https://github.com/openclaw/openclaw) AI agents. This was the first version of Scratchy — a production system that solved real problems around GenUI rendering, token-efficient formats, and multi-user agent interaction.
+The original Generative UI webchat client for [OpenClaw](https://github.com/openclaw/openclaw) AI agents. Built on a [custom fork](https://github.com/yassinebkr/openclaw) that adds GenUI support — upstream compatibility is planned but not yet available.
+
+This was the first version of Scratchy — a production system that solved real problems around GenUI rendering, token-efficient formats, and multi-user agent interaction.
 
 Archived here for reference and community use.
 
@@ -107,7 +109,7 @@ Saves ~30-40% tokens compared to equivalent JSON. See `web/js/toon-encoder.js`.
 
 - **[Scratchy](https://github.com/yassinebkr/scratchy)** — The current version, actively developed
 - **[ProteClaw](https://github.com/yassinebkr/proteclaw)** — Defense-in-depth security for OpenClaw agents
-- **[OpenClaw](https://github.com/openclaw/openclaw)** — The AI agent framework Scratchy is built for
+- **[OpenClaw](https://github.com/openclaw/openclaw)** — The AI agent framework Scratchy is built for ([fork used](https://github.com/yassinebkr/openclaw))
 
 ## License
 
