@@ -1,8 +1,10 @@
 # Scratchy v0 (Archive)
 
-> ⚠️ **This is the archived v1 codebase.** Active development has moved to [Scratchy v2](https://github.com/yassinebkr/scratchy-v2) (coming soon).
+> ⚠️ **This is an archived codebase.** Active development continues at [yassinebkr/scratchy](https://github.com/yassinebkr/scratchy).
 
-A Generative UI webchat client for [OpenClaw](https://github.com/openclaw/openclaw) AI agents.
+The original Generative UI webchat client for [OpenClaw](https://github.com/openclaw/openclaw) AI agents. This was the first version of Scratchy — a production system that solved real problems around GenUI rendering, token-efficient formats, and multi-user agent interaction.
+
+Archived here for reference and community use.
 
 ## What it does
 
@@ -19,11 +21,11 @@ Scratchy turns your OpenClaw agent into a visual, interactive workspace:
 
 ## Security
 
-Scratchy integrates with [ProteClaw](https://github.com/yassinebkr/proteclaw) — a defense-in-depth security plugin for OpenClaw agents. ProteClaw provides 9 layers of protection including session integrity, injection detection, canary tokens, and dynamic tool blocking.
+This codebase integrates with [ProteClaw](https://github.com/yassinebkr/proteclaw) — a defense-in-depth security plugin for OpenClaw agents. ProteClaw provides 9 layers of protection including session integrity, injection detection, canary tokens, and dynamic tool blocking.
 
-The codebase includes client-side and server-side filters that strip ProteClaw security metadata from messages, keeping the UI clean while the plugin operates transparently in the background.
+The client-side and server-side code includes filters that strip ProteClaw security metadata from messages, keeping the UI clean while the plugin operates transparently in the background.
 
-→ **[ProteClaw on GitHub](https://github.com/yassinebkr/proteclaw)** — open source, MIT licensed
+→ **[ProteClaw on GitHub](https://github.com/yassinebkr/proteclaw)**
 
 ## Current Status
 
@@ -103,9 +105,9 @@ Saves ~30-40% tokens compared to equivalent JSON. See `web/js/toon-encoder.js`.
 
 ## Related Projects
 
+- **[Scratchy](https://github.com/yassinebkr/scratchy)** — The current version, actively developed
 - **[ProteClaw](https://github.com/yassinebkr/proteclaw)** — Defense-in-depth security for OpenClaw agents
 - **[OpenClaw](https://github.com/openclaw/openclaw)** — The AI agent framework Scratchy is built for
-- **[Scratchy v2](https://github.com/yassinebkr/scratchy-v2)** — Next-gen spatial workbench (coming soon)
 
 ## License
 
