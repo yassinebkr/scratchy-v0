@@ -2458,14 +2458,22 @@ class AdminWidget {
     const totalSessions = this.sessionStore.totalSessions();
 
     let totalMessagesToday = 0, totalTokensToday = 0, totalMessagesThisHour = 0;
-    let platformCostToday = 0, byokCostToday = 0;
+    let totalTokensCumulative = 0;
+    let platformCostToday = 0, platformCostAll = 0;
+    let byokCostToday = 0, byokCostAll = 0;
     for (const u of users) {
       if (u.usage) {
         totalMessagesToday += u.usage.messagesToday || 0;
         totalTokensToday += u.usage.tokensToday || 0;
+        totalTokensCumulative += u.usage.tokensTotal || 0;
         totalMessagesThisHour += u.usage.messagesThisHour || 0;
-        if (u.usage.costSource === 'user') byokCostToday += u.usage.costToday || 0;
-        else platformCostToday += u.usage.costToday || 0;
+        if (u.usage.costSource === 'user') {
+          byokCostToday += u.usage.costToday || 0;
+          byokCostAll += u.usage.costTotal || 0;
+        } else {
+          platformCostToday += u.usage.costToday || 0;
+          platformCostAll += u.usage.costTotal || 0;
+        }
       }
     }
 
@@ -2497,9 +2505,14 @@ class AdminWidget {
       }},
       { op: 'patch', id: 'admin-gauge-tokens', data: {
         items: [
-          { label: 'Tokens Today', value: this._formatTokens(totalTokensToday) },
+          { label: 'Tokens Today (total)', value: this._formatTokens(totalTokensToday) },
+          { label: 'Tokens All Time', value: this._formatTokens(totalTokensCumulative) },
           { label: '💰 Your Cost Today', value: `$${platformCostToday.toFixed(2)}` },
-          ...(byokCostToday > 0 ? [{ label: '🔑 BYOK Cost Today', value: `$${byokCostToday.toFixed(2)}` }] : []),
+          { label: '💰 Your Cost Total', value: `$${platformCostAll.toFixed(2)}` },
+          ...(byokCostAll > 0 ? [
+            { label: '🔑 BYOK Cost Today', value: `$${byokCostToday.toFixed(2)}` },
+            { label: '🔑 BYOK Cost Total', value: `$${byokCostAll.toFixed(2)}` },
+          ] : []),
         ],
       }},
     ];
