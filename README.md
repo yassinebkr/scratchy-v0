@@ -2,11 +2,9 @@
 
 > ⚠️ **This is an archived codebase.** Active development continues at [yassinebkr/scratchy](https://github.com/yassinebkr/scratchy).
 
-The original Generative UI webchat client for [OpenClaw](https://github.com/openclaw/openclaw) AI agents. Built on a [custom fork](https://github.com/yassinebkr/openclaw) that adds GenUI support — upstream compatibility is planned but not yet available.
+A Generative UI webchat client for OpenClaw AI agents.
 
-This was the first version of Scratchy — a production system that solved real problems around GenUI rendering, token-efficient formats, and multi-user agent interaction.
-
-Archived here for reference and community use.
+> **Note:** This project runs on a [custom OpenClaw fork](https://github.com/yassinebkr/openclaw) with GenUI support. It is not compatible with upstream OpenClaw at this time.
 
 ## What it does
 
@@ -23,19 +21,9 @@ Scratchy turns your OpenClaw agent into a visual, interactive workspace:
 
 ## Security
 
-This codebase integrates with [ProteClaw](https://github.com/yassinebkr/proteclaw) — a defense-in-depth security plugin for OpenClaw agents. ProteClaw provides 9 layers of protection including session integrity, injection detection, canary tokens, and dynamic tool blocking.
+Scratchy integrates with [ProteClaw](https://github.com/yassinebkr/proteclaw) — a defense-in-depth security plugin for OpenClaw agents. ProteClaw provides 9 layers of protection including session integrity, injection detection, canary tokens, and dynamic tool blocking.
 
 The client-side and server-side code includes filters that strip ProteClaw security metadata from messages, keeping the UI clean while the plugin operates transparently in the background.
-
-→ **[ProteClaw on GitHub](https://github.com/yassinebkr/proteclaw)**
-
-## Current Status
-
-This codebase works with a [fork of OpenClaw](https://github.com/yassinebkr/openclaw) that includes GenUI support. Some features depend on fork-specific APIs (`api.on()` hooks) that are not yet in upstream OpenClaw.
-
-**What works out of the box:** Canvas rendering, TOON decoder, component library, auth system, WebSocket proxy.
-
-**What needs the fork:** Widget engine (server-side triggers), admin dashboard, some template features.
 
 ## Quick Start
 
@@ -49,7 +37,7 @@ npm install --legacy-peer-deps
 
 # Configure
 cp .env.example .env
-# Edit .env with your OpenClaw gateway URL and optional API keys
+# Edit .env with your OpenClaw fork gateway URL and optional API keys
 
 # Run
 node serve.js
@@ -109,7 +97,7 @@ Saves ~30-40% tokens compared to equivalent JSON. See `web/js/toon-encoder.js`.
 
 - **[Scratchy](https://github.com/yassinebkr/scratchy)** — The current version, actively developed
 - **[ProteClaw](https://github.com/yassinebkr/proteclaw)** — Defense-in-depth security for OpenClaw agents
-- **[OpenClaw](https://github.com/openclaw/openclaw)** — The AI agent framework Scratchy is built for ([fork used](https://github.com/yassinebkr/openclaw))
+- **[OpenClaw fork](https://github.com/yassinebkr/openclaw)** — The GenUI-enabled fork this project depends on
 
 ## License
 
