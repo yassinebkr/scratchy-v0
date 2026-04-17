@@ -1649,7 +1649,8 @@
       var messages = frame.payload.messages;
       if (messages.length === 0) return;
 
-      var added = 0;
+      // Root fix: Collect all valid messages first, then ingest in batch with proper sequencing
+      var validMessages = [];
       for (var j = 0; j < messages.length; j++) {
         var msg = messages[j];
         // Only render user and assistant messages — skip toolResult, toolCall, system
@@ -1659,7 +1660,8 @@
         var text = msg.content
           .filter(function(b) { return b.type === "text" && b.text; })
           .map(function(b) { return b.text; })
-          .join("\n");
+          .join("
+");
         if (!text) continue;
         if (isSystemMessage(text)) continue;
         if (connection._isSystemNoise && connection._isSystemNoise(text)) continue;
@@ -1668,23 +1670,47 @@
         if (msg.role === "user") text = cleanGatewayText(text);
         if (!text) continue;
 
-        if (!welcomeCleared) { renderer.clearWelcome(); welcomeCleared = true; }
-
-        // Store handles dedup via contentHash automatically
-        var countBefore = store.messages.length;
-        store.ingest({
+        validMessages.push({
           role: msg.role,
           text: text,
           source: "gateway",
-          timestamp: msg.timestamp
+          timestamp: msg.timestamp,
+          _originalIndex: j  // Preserve original order from gateway
         });
+      }
+
+      if (validMessages.length === 0) return;
+
+      // Sort by original index to ensure gateway order is preserved
+      validMessages.sort(function(a, b) { return a._originalIndex - b._originalIndex; });
+
+      // Find the minimum seq in the store to anchor our supplement range
+      var minSeq = 0;
+      if (store.messages.length > 0) {
+        for (var m = 0; m < store.messages.length; m++) {
+          if (store.messages[m].seq != null && store.messages[m].seq < minSeq) {
+            minSeq = store.messages[m].seq;
+          }
+        }
+      }
+
+      var added = 0;
+      for (var k = 0; k < validMessages.length; k++) {
+        if (!welcomeCleared) { renderer.clearWelcome(); welcomeCleared = true; }
+
+        // Assign sequential seq numbers to ensure proper ordering
+        // Use negative seq numbers to indicate these are historical supplements
+        validMessages[k].seq = minSeq - validMessages.length + k;
+
+        var countBefore = store.messages.length;
+        store.ingest(validMessages[k]);
         if (store.messages.length > countBefore) {
           added++;
         }
       }
 
       if (added > 0) {
-        console.log("[Scratchy] Supplemented " + added + " unflushed message(s) from gateway");
+        console.log("[Scratchy] Supplemented " + added + " unflushed message(s) from gateway (ordered)");
       }
     });
   }
