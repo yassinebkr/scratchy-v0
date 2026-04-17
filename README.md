@@ -30,6 +30,7 @@ Scratchy turns your OpenClaw agent into a visual, interactive workspace:
 - **BYOK (Bring Your Own Key) support** — Separate cost tracking for users with their own API keys
 
 ### Chat & UI Fixes
+- **Message ordering fix** — Root fix for message ordering bug when supplementing from gateway history. Messages now maintain correct chronological order after tab switch/reconnect.
 - **Instant load from cache** — Messages render from localStorage before WS connects (desktop only)
 - **History retry logic** — Auto-retries history load if no messages appear within 5s
 - **Canvas state restoration** — Server-side canvas state restored on reconnect
