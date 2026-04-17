@@ -19,6 +19,29 @@ Scratchy turns your OpenClaw agent into a visual, interactive workspace:
 - **Canvas persistence** — server-side state survives restarts
 - **Smart components** — components handle their own logic (streaming, polling, animation)
 
+## Recent Updates (March 2025)
+
+### Admin Dashboard Improvements
+- **Paginated chat history** — Efficient loading of large conversation histories
+- **Cost tracking fixes** — Fixed admin dashboard cost total disappearing on live update
+- **Session chain tracking** — Tracks all session IDs across gateway rotations for complete history
+- **Usage aggregation** — New UsageAggregator with real-time watching and query API
+- **Per-provider cost breakdown** — Detailed cost tracking by provider (Anthropic, Google, OpenAI)
+- **BYOK (Bring Your Own Key) support** — Separate cost tracking for users with their own API keys
+
+### Chat & UI Fixes
+- **Instant load from cache** — Messages render from localStorage before WS connects (desktop only)
+- **History retry logic** — Auto-retries history load if no messages appear within 5s
+- **Canvas state restoration** — Server-side canvas state restored on reconnect
+- **Session isolation** — Per-user session keys with proper isolation
+- **Widget action routing** — Direct routing bypasses chat for form submissions
+
+### Security & Auth
+- **Trial period management** — Set/extend/remove trial periods for users
+- **Capability controls** — Per-user tool and model permissions
+- **Quota enforcement** — Message and token limits per hour/day
+- **Password reset flow** — Secure invite email with temporary passwords
+
 ## Security
 
 Scratchy integrates with [ProteClaw](https://github.com/yassinebkr/proteclaw) — a defense-in-depth security plugin for OpenClaw agents. ProteClaw provides 9 layers of protection including session integrity, injection detection, canary tokens, and dynamic tool blocking.
@@ -68,12 +91,34 @@ docs/             → Design docs and phase specs
 | `stats` | Grid of label/value pairs |
 | `gauge` | Circular progress indicator |
 | `chart-bar`, `chart-line`, `chart-pie` | Data visualizations |
-| `table` | Headers + rows |
+| `table` | Headers + rows with action buttons |
 | `checklist` | Interactive task list |
 | `timeline` | Chronological events |
 | `form` | Input fields + actions |
 | `buttons`, `chips`, `toggle` | Interactive controls |
-| ...and 20+ more | See `web/js/app.js` for full list |
+| `kv` | Key-value pairs |
+| `tags` | Colored labels |
+| `alert` | Success/warning/error/info alerts |
+| `accordion` | Collapsible sections |
+| `tabs` | Tabbed content |
+| `progress` | Progress bars |
+| `sparkline` | Mini charts |
+| `code` | Syntax-highlighted code blocks |
+| `image`, `video` | Media display |
+| ...and more | See `web/js/app.js` for full list |
+
+## Admin Dashboard Features
+
+The admin dashboard (accessible to admin users) provides:
+
+- **User management** — Create, edit, disable users; manage roles
+- **Usage monitoring** — Real-time token and cost tracking
+- **Quota management** — Per-user message and token limits
+- **Trial management** — Set custom trial periods (hours/days)
+- **Capability controls** — Block/allow specific tools and models
+- **Deploy manager** — Version-controlled deployments with rollback
+- **Provider analytics** — Cost breakdown by AI provider
+- **Session monitoring** — Active gateway sessions with model info
 
 ## TOON Format
 
